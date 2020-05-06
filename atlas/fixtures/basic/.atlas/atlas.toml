@@ -1,0 +1,15 @@
+# should atlas lookup proceed up the directory structure?
+#   default: false
+child = false
+
+# default atlas to use when none is specified.
+#   default: "main"
+default = "main"
+
+[atlases.main]
+  id = '31498eaba8eb44d5a4ecc4acf7471469'
+  url = 'https://atlas.apollo.dev'
+
+[atlases.internal]
+  id = 'a223bbc2347dfaefsdf3fefdssdac382'
+  url = 'https://some-internal-atlas.somewhere'

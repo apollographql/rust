@@ -1,0 +1,9 @@
+schema @id(name: "lyrical") {
+  query: Query
+  mutation: Mutation
+}
+
+type Query {
+  findUser(byId: ID): User @from(field: "users.Query.findUser")
+  me: User @from(field: "auth.Query.me")
+}

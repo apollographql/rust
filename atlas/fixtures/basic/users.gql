@@ -1,0 +1,8 @@
+type User {
+  id: ID
+  name: String
+}
+
+type Query {
+  findUser(byId: ID): User
+}

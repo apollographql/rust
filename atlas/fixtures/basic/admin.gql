@@ -1,0 +1,11 @@
+enum Role {
+  GUEST, USER, ADMIN
+}
+
+extend type User @from(type: "users.User") {
+  role: Role
+}
+
+type Query {
+  me: User
+}

@@ -30,6 +30,10 @@ pub struct Print {
     /// suppress headers when printing multiple files
     pub no_headers: bool,
 
+    #[structopt(short = "s", long)]
+    /// print the syntax tree
+    pub ast: bool,
+
     #[structopt(parse(from_os_str))]
     /// schemas to print
     pub files: Vec<PathBuf>,

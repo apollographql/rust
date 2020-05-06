@@ -13,7 +13,11 @@ impl Command for Print {
             if printing_headers {
                 println!("# {}", file.to_str().expect("filename"));
             }
-            println!("{}", doc);
+            if self.ast {
+                println!("{:#?}", doc)
+            } else {
+                println!("{}", doc);
+            }
         })
     }
 }
@@ -22,11 +26,13 @@ impl Command for Print {
 fn does_not_fail_with_no_files() {
     Print {
         files: vec![],
+        ast: false,
         no_headers: false,
     }
     .run();
     Print {
         files: vec![],
+        ast: false,
         no_headers: true,
     }
     .run();
