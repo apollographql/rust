@@ -1,0 +1,16 @@
+[package]
+name = "atlas"
+description = """
+    Cross-schema namespacing and lookups for GraphQL.
+"""
+version = "0.0.1"
+authors = ["Apollo <opensource@apollographql.com>"]
+homepage = "https://github.com/apollographql/apollo-cli"
+edition = "2018"
+
+[dependencies]
+graphql-parser = { path = "../graphql-parser" }
+log = "0.4"
+async-std = "1.5.0"
+enum_dispatch = "0.3.0"
+chashmap = "2.2.2"

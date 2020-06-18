@@ -42,7 +42,7 @@ pub struct OperationDefinition<'a> {
     pub selection_set: SelectionSet<'a>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Operation {
     Query,
     Mutation,

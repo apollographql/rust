@@ -1,5 +1,6 @@
 [workspace]
 members = [
+  "atlas",
   "cli",
   "graphql-parser",
   "query-planner"
