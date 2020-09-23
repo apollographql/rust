@@ -104,6 +104,7 @@
 - __Deprecation:__ Deprecated the `ENGINE_API_KEY` environment variable in favor of its new name, `APOLLO_KEY`.  The new name mirrors the name used within Apollo Graph Manager.  Aside from the rename, the functionality remains otherwise identical.  Continued use of `ENGINE_API_KEY` will result in deprecation warnings being printed to the server console.  Support for `ENGINE_API_KEY` will be removed in a future, major update.  [#3923](https://github.com/apollographql/apollo-server/pull/3923)
 - __Deprecation:__ Deprecated the `APOLLO_SCHEMA_TAG` environment variable in favor of its new name, `APOLLO_GRAPH_VARIANT`.  The new name mirrors the name used within Apollo Graph Manager.  Aside from the rename, the functionality remains otherwise identical.  Use of the now-deprecated name will result in a deprecation warning being printed to the server console.  Support will be removed entirely in a future, major update.  To avoid misconfiguration, runtime errors will be thrown if the new and deprecated versions are _both_ set. [#3855](https://github.com/apollographql/apollo-server/pull/3855)
 - Add inadvertently excluded `apollo-server-errors` runtime dependency. [#3927](https://github.com/apollographql/apollo-server/pull/3927)
+- Support alternate query plan cache implementations via config. [#4026](https://github.com/apollographql/apollo-server/pull/4026)
 
 ## v0.14.1
 
