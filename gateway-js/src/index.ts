@@ -65,6 +65,7 @@ interface GatewayConfigBase {
   experimental_approximateQueryPlanStoreMiB?: number;
   experimental_autoFragmentization?: boolean;
   fetcher?: typeof fetch;
+  serviceFetcher?: typeof fetch;
   serviceHealthCheck?: boolean;
 }
 
@@ -203,7 +204,8 @@ export class ApolloGateway implements GraphQLService {
   private warnedStates: WarnedStates = Object.create(null);
   private queryPlannerPointer?: WasmPointer;
 
-  private fetcher: typeof fetch = getDefaultGcsFetcher();
+  private gcsFetcher: typeof fetch = getDefaultGcsFetcher();
+  private serviceFetcher?: typeof fetch;
 
   // Observe query plan, service info, and operation info prior to execution.
   // The information made available here will give insight into the resulting
@@ -304,8 +306,9 @@ export class ApolloGateway implements GraphQLService {
       }
 
       if (config.fetcher) {
-        this.fetcher = config.fetcher;
+        this.gcsFetcher = config.fetcher;
       }
+      this.serviceFetcher = config.serviceFetcher;
     }
   }
 
@@ -573,6 +576,7 @@ export class ApolloGateway implements GraphQLService {
       ? this.config.buildService(serviceDef)
       : new RemoteGraphQLDataSource({
           url: serviceDef.url,
+          fetcher: this.serviceFetcher
         });
   }
 
@@ -597,7 +601,7 @@ export class ApolloGateway implements GraphQLService {
         graphVariant: this.apolloConfig!.graphVariant,
         federationVersion:
           (config as ManagedGatewayConfig).federationVersion || 1,
-        fetcher: this.fetcher,
+        fetcher: this.gcsFetcher,
       });
     };
 
