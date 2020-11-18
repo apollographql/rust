@@ -1,5 +1,5 @@
 ---
-source: graphql-parser/tests/tests.rs
+source: graphql-parser/tests/__generated__tests.rs
 expression: "format!(\"{}\\n---\\n{:#?}\", & input, & result)"
 ---
 subscription @directive {
