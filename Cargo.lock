@@ -936,6 +936,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ea221b5284a47e40033bf9b66f35f984ec0ea2931eb03505246cd27a963f981b"
 
 [[package]]
+name = "core-schema"
+version = "0.1.0"
+dependencies = [
+ "graphql-parser",
+ "insta",
+ "lazy_static",
+ "regex",
+ "thiserror",
+ "url",
+]
+
+[[package]]
 name = "cpuid-bool"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

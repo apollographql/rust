@@ -1,0 +1,37 @@
+---
+source: core-schema/src/schema.rs
+expression: "{\n    let schema =\n        Schema::parse(r#\"\n            schema\n                @core(feature: \"https://lib.apollo.dev/core/v0.1\")\n                @core(feature: \"https://spec.example.com/A/v2.2\")\n            {\n                query: Query\n            }\n            \n            schema {\n                query: Query\n            }\n        \"#)?;\n    (schema.errors, schema.features)\n}"
+---
+(
+    [
+        ExtraSchema(
+            Pos(9:13),
+        ),
+    ],
+    [
+        Feature {
+            spec: Spec {
+                identity: "https://lib.apollo.dev/core",
+                name: "core",
+                version: Version(
+                    0,
+                    1,
+                ),
+            },
+            name: "core",
+            position: Pos(3:17),
+        },
+        Feature {
+            spec: Spec {
+                identity: "https://spec.example.com/A",
+                name: "A",
+                version: Version(
+                    2,
+                    2,
+                ),
+            },
+            name: "A",
+            position: Pos(4:17),
+        },
+    ],
+)

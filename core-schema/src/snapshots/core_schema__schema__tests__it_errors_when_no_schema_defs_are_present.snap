@@ -1,0 +1,10 @@
+---
+source: core-schema/src/schema.rs
+expression: "{\n    let schema =\n        Schema::parse(r#\"\n            type User {\n                id: ID!\n            }\n        \"#)?;\n    (schema.errors, schema.features)\n}"
+---
+(
+    [
+        NoSchemas,
+    ],
+    [],
+)

@@ -1,0 +1,20 @@
+[package]
+name = "core-schema"
+version = "0.1.0"
+authors = ["Ashi Krishnan <queerviolet@github.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# workspace
+graphql-parser = { path = "../graphql-parser" }
+
+# 3rd party
+lazy_static = "1.4.0"
+regex = "1"
+url = "2.2.0"
+thiserror = "1.0.23"
+
+[dev-dependencies]
+insta = "1.5.2"

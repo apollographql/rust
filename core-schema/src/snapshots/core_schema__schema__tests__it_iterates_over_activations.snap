@@ -1,0 +1,59 @@
+---
+source: core-schema/src/schema.rs
+expression: "{\n    let implementations =\n        Implementations::new().provide(\"https://spec.example.com/A\", (1, 2),\n                                       \"impl A v1.2\".to_owned()).provide(\"https://spec.example.com/B\",\n                                                                         (1,\n                                                                          2),\n                                                                         \"impl B v1.2\".to_owned());\n    let schema =\n        Schema::parse(r#\"\n                schema\n                    @core(feature: \"https://lib.apollo.dev/core/v0.1\")\n                    @core(feature: \"https://spec.example.com/A/v1.0\")\n                    @core(feature: \"https://spec.example.com/unknown/v1.0\")\n                {\n                    query: Query\n                }\n                \"#)?;\n    let activations =\n        schema.activations(&implementations).map(|(req, find)|\n                                                     (req,\n                                                      find.collect::<Vec<_>>())).collect::<Vec<_>>();\n    format!(\"{:#?}\", activations)\n}"
+---
+[
+    (
+        Feature {
+            spec: Spec {
+                identity: "https://lib.apollo.dev/core",
+                name: "core",
+                version: Version(
+                    0,
+                    1,
+                ),
+            },
+            name: "core",
+            position: Pos(3:21),
+        },
+        [],
+    ),
+    (
+        Feature {
+            spec: Spec {
+                identity: "https://spec.example.com/A",
+                name: "A",
+                version: Version(
+                    1,
+                    0,
+                ),
+            },
+            name: "A",
+            position: Pos(4:21),
+        },
+        [
+            (
+                Version(
+                    1,
+                    2,
+                ),
+                "impl A v1.2",
+            ),
+        ],
+    ),
+    (
+        Feature {
+            spec: Spec {
+                identity: "https://spec.example.com/unknown",
+                name: "unknown",
+                version: Version(
+                    1,
+                    0,
+                ),
+            },
+            name: "unknown",
+            position: Pos(5:21),
+        },
+        [],
+    ),
+]
