@@ -1264,6 +1264,107 @@ describe('buildQueryPlan', () => {
                 origin: country
               }
             }
+          },
+          Flatten(path: "topProducts.@") {
+            Fetch(service: "books") {
+              {
+                ... on Book {
+                  __typename
+                  isbn
+                }
+              } =>
+              {
+                ... on Book {
+                  title
+                }
+              }
+            },
+          },
+        },
+      }
+    `);
+  });
+
+  fit(`minimal repro1`, () => {
+    const operationString = `#graphql
+      query {
+        topProducts(first: 20) {
+          ... on Furniture {
+            ...ProductFragment
+          }
+          ... on Book {
+            ...ProductFragment
+            title
+          }
+        }
+      }
+      fragment ProductFragment on Product {
+        name
+        price
+      }
+    `;
+
+    const operationDocument = gql(operationString);
+
+    const queryPlan = buildQueryPlan(
+      buildOperationContext({
+        schema,
+        operationDocument,
+        operationString,
+        queryPlannerPointer,
+      })
+    );
+
+    expect(queryPlan).toMatchInlineSnapshot(`
+      QueryPlan {
+        Sequence {
+          Fetch(service: "product") {
+            {
+              topProducts(first: 20) {
+                __typename
+                name
+                price
+                ... on Book {
+                  __typename
+                  isbn
+                }
+              }
+            }
+          },
+          Flatten(path: "topProducts.@") {
+            Fetch(service: "books") {
+              {
+                ... on Book {
+                  __typename
+                  isbn
+                }
+              } =>
+              {
+                ... on Book {
+                  title
+                }
+              }
+            },
+          },
+        },
+      }
+    `);
+  });
+
+  fit(`minimal repro2`, () => {
+    const operationString = `#graphql
+      query {
+        topProducts(first: 20) {
+          ... on Furniture {
+            __typename
+            name
+            price
+          }
+          ... on Book {
+            __typename
+            name
+            price
+            title
           }
         }
       `;
@@ -1276,8 +1377,7 @@ describe('buildQueryPlan', () => {
           operationDocument,
           operationString,
           queryPlannerPointer,
-        }),
-        { autoFragmentization: true },
+        })
       );
 
       expect(queryPlan).toMatchInlineSnapshot(`
