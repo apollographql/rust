@@ -19,7 +19,8 @@
     "node": ">=12.13.0 <17.0"
   },
   "dependencies": {
-    "@apollo/federation": "file:../federation-js"
+    "@apollo/federation": "file:../federation-js",
+    "@apollo/query-planner": "file:../query-planner-js"
   },
   "peerDependencies": {
     "graphql": "^14.5.0 || ^15.0.0"

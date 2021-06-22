@@ -1,9 +1,9 @@
 use std::{fs::read_to_string, path::PathBuf};
 
-use harmonizer::{harmonize, ServiceDefinition};
+use harmonizer::compose::{compose, ServiceDefinition};
 
 fn main() {
-    let composed = harmonize(
+    let composed = compose(
         std::env::args()
             .skip(1)
             .map(|file| {

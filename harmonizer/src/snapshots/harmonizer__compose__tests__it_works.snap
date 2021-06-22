@@ -1,6 +1,6 @@
 ---
-source: harmonizer/src/lib.rs
-expression: "harmonize(vec![ServiceDefinition ::\n               new(\"users\", \"undefined\",\n                   \"\n            type User {\n              id: ID\n              name: String\n            }\n\n            type Query {\n              users: [User!]\n            }\n          \"),\n               ServiceDefinition ::\n               new(\"movies\", \"undefined\",\n                   \"\n            type Movie {\n              title: String\n              name: String\n            }\n\n            extend type User {\n              favorites: [Movie!]\n            }\n\n            type Query {\n              movies: [Movie!]\n            }\n          \")]).unwrap()"
+source: harmonizer/src/compose.rs
+expression: "compose(vec![ServiceDefinition ::\n             new(\"users\", \"undefined\",\n                 \"\n            type User {\n              id: ID\n              name: String\n            }\n\n            type Query {\n              users: [User!]\n            }\n          \"),\n             ServiceDefinition ::\n             new(\"movies\", \"undefined\",\n                 \"\n            type Movie {\n              title: String\n              name: String\n            }\n\n            extend type User {\n              favorites: [Movie!]\n            }\n\n            type Query {\n              movies: [Movie!]\n            }\n          \")]).unwrap()"
 
 ---
 schema

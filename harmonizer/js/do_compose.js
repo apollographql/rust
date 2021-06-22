@@ -1,14 +1,14 @@
 /** @typedef {{typeDefs: string, name: string, url?: string;}} ServiceDefinition */
 
 /**
- * This `composition` is defined as a global by the runtime we define in Rust.
+ * This `bridge` is defined as a global by the runtime we define in Rust.
  * We declare this as a `var` here only to allow the TSDoc type annotation to be
  * applied to it. Running `var` multiple times has no effect.
  * @type {{
  *   composeAndValidate: import('../../federation-js').composeAndValidate,
  *   parseGraphqlDocument: import('graphql').parse
  * }} */
-var composition;
+var bridge;
 
 /**
  * @type {ServiceDefinition[]}
@@ -36,7 +36,7 @@ serviceList = serviceList.map(({ typeDefs, ...rest }) => ({
 
 function parseTypedefs(source) {
   try {
-    return composition.parseGraphqlDocument(source)    
+    return bridge.parseGraphqlDocument(source)
   } catch (err) {
     // Return the error in a way that we know how to handle it.
     done({ Err: [err] });
@@ -47,7 +47,7 @@ try {
   /**
    * @type {{ errors: Error[], supergraphSdl?: undefined } | { errors?: undefined, supergraphSdl: string; }}
    */
-  const composed = composition.composeAndValidate(serviceList);
+  const composed = bridge.composeAndValidate(serviceList);
   done(
     composed.errors ? { Err: composed.errors } : { Ok: composed.supergraphSdl },
   );

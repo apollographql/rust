@@ -1,0 +1,14 @@
+---
+source: harmonizer/src/plan.rs
+expression: "plan(OperationalContext{schema:\n                            include_str!(\"testdata/schema.graphql\").to_string(),\n                        query:\n                            \"query {\n          me {\n            name {\n              first\n              last\n            }\n          }\n        }\".to_string(),\n                        operation: \"\".to_string(),},\n     QueryPlanOptions::DEFAULT).unwrap()"
+
+---
+{
+  "kind": "QueryPlan",
+  "node": {
+    "kind": "Fetch",
+    "serviceName": "accounts",
+    "variableUsages": [],
+    "operation": "{me{name{first last}}}"
+  }
+}

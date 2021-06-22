@@ -6,13 +6,14 @@ import { QueryPlan } from './QueryPlan';
 
 export * from './composedSchema';
 import {
+  buildOperationContext,
   buildQueryPlan,
   BuildQueryPlanOptions,
-  buildOperationContext,
   OperationContext,
 } from './buildQueryPlan';
+import {buildComposedSchema} from "./composedSchema";
 import { GraphQLSchema } from 'graphql';
-export { BuildQueryPlanOptions, buildOperationContext };
+export { BuildQueryPlanOptions, OperationContext, buildComposedSchema, buildOperationContext, buildQueryPlan };
 
 // There isn't much in this class yet, and I didn't want to make too many
 // changes at once, but since we were already storing a pointer to a

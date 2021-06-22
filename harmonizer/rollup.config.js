@@ -7,8 +7,8 @@ export default [
   {
     input: path.resolve(__dirname, './js/index.mjs'),
     output: {
-      name: 'composition',
-      file: path.resolve(__dirname, './dist/composition.js'),
+      name: 'bridge',
+      file: path.resolve(__dirname, './dist/bridge.js'),
       format: 'iife',
       globals: {
         // This must be mocked in the runtime as an
