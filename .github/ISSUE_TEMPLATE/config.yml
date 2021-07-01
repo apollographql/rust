@@ -5,8 +5,7 @@ contact_links:
     about: >-
       Many questions are already answered on Stack Overflow!
       We suggest starting here!
-  - name: "💬 Questions: Spectrum Community Support"
-    url: https://spectrum.chat/apollo/apollo-federation
+  - name: "💬 Questions: Apollo GraphQL Community"
+    url: https://community.apollographql.com/
     about: >-
-      If you're unable to find an answer on Stack Overflow, the Apollo
-      Federation channel on our community Spectrum is the next best place.
+      If you're unable to find an answer on Stack Overflow, the Apollo GraphQL Community is the next best place.

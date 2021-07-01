@@ -52,18 +52,18 @@ describe('composeServices', () => {
     expect(schema).toBeDefined();
 
     expect(schema.getType('User')).toMatchInlineSnapshot(`
-                  type User {
-                    name: String
-                    email: String!
-                  }
-            `);
+      type User {
+        email: String!
+        name: String
+      }
+    `);
 
     expect(schema.getType('Product')).toMatchInlineSnapshot(`
-                  type Product {
-                    sku: String!
-                    name: String!
-                  }
-            `);
+      type Product {
+        name: String!
+        sku: String!
+      }
+    `);
 
     const product = schema.getType('Product') as GraphQLObjectType;
     const user = schema.getType('User') as GraphQLObjectType;
@@ -116,12 +116,12 @@ describe('composeServices', () => {
       expect(schema).toBeDefined();
 
       expect(schema.getType('Product')).toMatchInlineSnapshot(`
-                        type Product {
-                          sku: String!
-                          name: String!
-                          price: Int!
-                        }
-                  `);
+        type Product {
+          name: String!
+          price: Int!
+          sku: String!
+        }
+      `);
 
       const product = schema.getType('Product') as GraphQLObjectType;
 
@@ -156,12 +156,12 @@ describe('composeServices', () => {
       expect(schema).toBeDefined();
 
       expect(schema.getType('Product')).toMatchInlineSnapshot(`
-                        type Product {
-                          sku: String!
-                          name: String!
-                          price: Int!
-                        }
-                  `);
+        type Product {
+          name: String!
+          price: Int!
+          sku: String!
+        }
+      `);
 
       const product = schema.getType('Product') as GraphQLObjectType;
 
@@ -206,13 +206,13 @@ describe('composeServices', () => {
       expect(schema).toBeDefined();
 
       expect(schema.getType('Product')).toMatchInlineSnapshot(`
-                        type Product {
-                          sku: String!
-                          name: String!
-                          price: Int!
-                          color: String!
-                        }
-                  `);
+        type Product {
+          color: String!
+          name: String!
+          price: Int!
+          sku: String!
+        }
+      `);
 
       const product = schema.getType('Product') as GraphQLObjectType;
 
@@ -280,13 +280,13 @@ describe('composeServices', () => {
 
       const product = schema.getType('Product') as GraphQLObjectType;
       expect(product).toMatchInlineSnapshot(`
-                        type Product {
-                          sku: String!
-                          name: String!
-                          price: Float!
-                          color: String!
-                        }
-                  `);
+        type Product {
+          color: String!
+          name: String!
+          price: Float!
+          sku: String!
+        }
+      `);
 
       expect(getFederationMetadata(product)?.serviceName).toEqual('serviceB');
       expect(
@@ -324,12 +324,12 @@ describe('composeServices', () => {
       expect(schema).toBeDefined();
 
       expect(schema.getType('Product')).toMatchInlineSnapshot(`
-                        type Product {
-                          sku: String!
-                          name(type: String): String!
-                          price(currency: Curr!): Int!
-                        }
-                  `);
+        type Product {
+          name(type: String): String!
+          price(currency: Curr!): Int!
+          sku: String!
+        }
+      `);
 
       const product = schema.getType('Product') as GraphQLObjectType;
       expect(product.getFields()['price'].args[0].name).toEqual('currency');
@@ -426,11 +426,11 @@ describe('composeServices', () => {
         const product = schema.getType('Product') as GraphQLObjectType;
 
         expect(product).toMatchInlineSnapshot(`
-                              type Product {
-                                sku: String!
-                                name: String!
-                              }
-                        `);
+          type Product {
+            name: String!
+            sku: String!
+          }
+        `);
         expect(
           getFederationMetadata(product.getFields()['name'])?.serviceName,
         ).toEqual('serviceB');
@@ -493,11 +493,11 @@ describe('composeServices', () => {
         const product = schema.getType('Product') as GraphQLObjectType;
 
         expect(product).toMatchInlineSnapshot(`
-                              type Product {
-                                sku: String!
-                                name: String!
-                              }
-                        `);
+          type Product {
+            name: String!
+            sku: String!
+          }
+        `);
         expect(
           getFederationMetadata(product.getFields()['name'])?.serviceName,
         ).toEqual('serviceB');
@@ -678,12 +678,12 @@ describe('composeServices', () => {
       expect(schema).toBeDefined();
 
       expect(schema.getType('Product')).toMatchInlineSnapshot(`
-                        type Product implements Item {
-                          id: String!
-                          sku: String!
-                          name: String!
-                        }
-                  `);
+        type Product implements Item {
+          id: String!
+          name: String!
+          sku: String!
+        }
+      `);
 
       const product = schema.getType('Product') as GraphQLObjectType;
 
@@ -720,11 +720,11 @@ describe('composeServices', () => {
       expect(schema).toBeDefined();
 
       expect(schema.getQueryType()).toMatchInlineSnapshot(`
-                        type Query {
-                          products: [ID!]
-                          people: [ID!]
-                        }
-                  `);
+        type Query {
+          people: [ID!]
+          products: [ID!]
+        }
+      `);
 
       const query = schema.getQueryType()!;
 
@@ -762,11 +762,11 @@ describe('composeServices', () => {
       expect(schema).toBeDefined();
 
       expect(schema.getType('Query')).toMatchInlineSnapshot(`
-                        type Query {
-                          products: [ID!]
-                          people: [ID!]
-                        }
-                  `);
+        type Query {
+          people: [ID!]
+          products: [ID!]
+        }
+      `);
 
       const query = schema.getType('Query') as GraphQLObjectType;
 
@@ -957,12 +957,12 @@ describe('composeServices', () => {
         const product = schema.getType('Product') as GraphQLObjectType;
 
         expect(product).toMatchInlineSnapshot(`
-                              type Product {
-                                sku: String!
-                                name: String!
-                                price: Int!
-                              }
-                        `);
+          type Product {
+            name: String!
+            price: Int!
+            sku: String!
+          }
+        `);
         expect(
           getFederationMetadata(product.getFields()['price'])?.serviceName,
         ).toEqual('serviceB');
@@ -1377,12 +1377,12 @@ describe('composeServices', () => {
 
         const product = schema.getType('Product') as GraphQLObjectType;
         expect(product).toMatchInlineSnapshot(`
-                              type Product {
-                                sku: String!
-                                upc: String!
-                                price: Int!
-                              }
-                        `);
+          type Product {
+            price: Int!
+            sku: String!
+            upc: String!
+          }
+        `);
       });
 
       it('treats interfaces with @extends as interface extensions', () => {
@@ -1420,9 +1420,9 @@ describe('composeServices', () => {
         const product = schema.getType('Product') as GraphQLObjectType;
         expect(product).toMatchInlineSnapshot(`
           interface Product {
+            price: Int!
             sku: String!
             upc: String!
-            price: Int!
           }
         `);
       });

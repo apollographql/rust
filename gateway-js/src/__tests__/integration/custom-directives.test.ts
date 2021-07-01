@@ -1,6 +1,9 @@
 import gql from 'graphql-tag';
 import { execute } from '../execution-utils';
-import { astSerializer, queryPlanSerializer } from 'apollo-federation-integration-testsuite';
+import {
+  astSerializer,
+  queryPlanSerializer,
+} from 'apollo-federation-integration-testsuite';
 import { fixtures } from 'apollo-federation-integration-testsuite';
 
 expect.addSnapshotSerializer(astSerializer);
@@ -118,12 +121,12 @@ describe('custom executable directives', () => {
         [...fixtures, invalidService],
       ),
     ).rejects.toThrowErrorMatchingInlineSnapshot(`
-"[@stream] -> Custom directives must be implemented in every service. The following services do not implement the @stream directive: invalidService.
+      "[@invalid] -> Custom directives must be implemented in every service. The following services do not implement the @invalid directive: accounts, books, documents, inventory, product, reviews.
 
-[@transform] -> Custom directives must be implemented in every service. The following services do not implement the @transform directive: invalidService.
+      [@stream] -> Custom directives must be implemented in every service. The following services do not implement the @stream directive: invalidService.
 
-[@invalid] -> Custom directives must be implemented in every service. The following services do not implement the @invalid directive: accounts, books, documents, inventory, product, reviews."
-`);
+      [@transform] -> Custom directives must be implemented in every service. The following services do not implement the @transform directive: invalidService."
+    `);
   });
 
   it("returns validation errors when directives aren't identical across all services", async () => {
@@ -150,16 +153,16 @@ describe('custom executable directives', () => {
         [...fixtures, invalidService],
       ),
     ).rejects.toThrowErrorMatchingInlineSnapshot(`
-"[@transform] -> Custom directives must be implemented in every service. The following services do not implement the @transform directive: invalid.
+      "[@transform] -> Custom directives must be implemented in every service. The following services do not implement the @transform directive: invalid.
 
-[@stream] -> custom directives must be defined identically across all services. See below for a list of current implementations:
-	accounts: directive @stream on FIELD
-	books: directive @stream on FIELD
-	documents: directive @stream on FIELD
-	inventory: directive @stream on FIELD
-	product: directive @stream on FIELD
-	reviews: directive @stream on FIELD
-	invalid: directive @stream on QUERY"
-`);
+      [@stream] -> custom directives must be defined identically across all services. See below for a list of current implementations:
+      	accounts: directive @stream on FIELD
+      	books: directive @stream on FIELD
+      	documents: directive @stream on FIELD
+      	inventory: directive @stream on FIELD
+      	product: directive @stream on FIELD
+      	reviews: directive @stream on FIELD
+      	invalid: directive @stream on QUERY"
+    `);
   });
 });

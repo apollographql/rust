@@ -25,27 +25,27 @@ describe('printFederatedSchema', () => {
       union Body = Image | Text
 
       type Book implements Product @key(fields: \\"isbn\\") {
-        isbn: String!
-        title: String
-        year: Int
-        similarBooks: [Book]!
-        metadata: [MetadataOrError]
+        details: ProductDetailsBook
         inStock: Boolean
         isCheckedOut: Boolean
-        upc: String!
-        sku: String!
+        isbn: String!
+        metadata: [MetadataOrError]
         name(delimeter: String = \\" \\"): String @requires(fields: \\"title year\\")
         price: String
-        details: ProductDetailsBook
-        reviews: [Review]
         relatedReviews: [Review!]! @requires(fields: \\"similarBooks { isbn }\\")
+        reviews: [Review]
+        similarBooks: [Book]!
+        sku: String!
+        title: String
+        upc: String!
+        year: Int
       }
 
-      union Brand = Ikea | Amazon
+      union Brand = Amazon | Ikea
 
       type Car implements Vehicle @key(fields: \\"id\\") {
-        id: String!
         description: String
+        id: String!
         price: String
         retailPrice: String @requires(fields: \\"price\\")
       }
@@ -56,16 +56,16 @@ describe('printFederatedSchema', () => {
       }
 
       type Furniture implements Product @key(fields: \\"sku\\") @key(fields: \\"upc\\") {
-        upc: String!
-        sku: String!
-        name: String
-        price: String
         brand: Brand
-        metadata: [MetadataOrError]
         details: ProductDetailsFurniture
         inStock: Boolean
         isHeavy: Boolean
+        metadata: [MetadataOrError]
+        name: String
+        price: String
         reviews: [Review]
+        sku: String!
+        upc: String!
       }
 
       type Ikea {
@@ -73,8 +73,8 @@ describe('printFederatedSchema', () => {
       }
 
       type Image implements NamedObject {
-        name: String!
         attributes: ImageAttributes!
+        name: String!
       }
 
       type ImageAttributes {
@@ -92,13 +92,13 @@ describe('printFederatedSchema', () => {
         userAccount(id: ID! = 1): User @requires(fields: \\"name\\")
       }
 
-      union MetadataOrError = KeyValue | Error
+      union MetadataOrError = Error | KeyValue
 
       type Mutation {
-        login(username: String!, password: String!): User
-        reviewProduct(upc: String!, body: String!): Product
-        updateReview(review: UpdateReviewInput!): Review
         deleteReview(id: ID!): Boolean
+        login(password: String!, username: String!): User
+        reviewProduct(body: String!, upc: String!): Product
+        updateReview(review: UpdateReviewInput!): Review
       }
 
       type Name {
@@ -115,13 +115,13 @@ describe('printFederatedSchema', () => {
       }
 
       interface Product {
-        upc: String!
-        sku: String!
-        name: String
-        price: String
         details: ProductDetails
         inStock: Boolean
+        name: String
+        price: String
         reviews: [Review]
+        sku: String!
+        upc: String!
       }
 
       interface ProductDetails {
@@ -134,30 +134,30 @@ describe('printFederatedSchema', () => {
       }
 
       type ProductDetailsFurniture implements ProductDetails {
-        country: String
         color: String
+        country: String
       }
 
       type Query {
-        user(id: ID!): User
-        me: User
+        body: Body!
         book(isbn: String!): Book
         books: [Book]
         library(id: ID!): Library
-        body: Body!
+        me: User
         product(upc: String!): Product
-        vehicle(id: String!): Vehicle
-        topProducts(first: Int = 5): [Product]
         topCars(first: Int = 5): [Car]
+        topProducts(first: Int = 5): [Product]
         topReviews(first: Int = 5): [Review]
+        user(id: ID!): User
+        vehicle(id: String!): Vehicle
       }
 
       type Review @key(fields: \\"id\\") {
-        id: ID!
-        body(format: Boolean = false): String
         author: User @provides(fields: \\"username\\")
-        product: Product
+        body(format: Boolean = false): String
+        id: ID!
         metadata: [MetadataOrError]
+        product: Product
       }
 
       type SMSAccount @key(fields: \\"number\\") {
@@ -165,8 +165,8 @@ describe('printFederatedSchema', () => {
       }
 
       type Text implements NamedObject {
-        name: String!
         attributes: TextAttributes!
+        name: String!
       }
 
       type TextAttributes {
@@ -177,42 +177,42 @@ describe('printFederatedSchema', () => {
       union Thing = Car | Ikea
 
       input UpdateReviewInput {
-        id: ID!
         body: String
+        id: ID!
       }
 
       type User @key(fields: \\"id\\") @key(fields: \\"username name { first last }\\") {
-        id: ID!
-        name: Name
-        username: String
-        birthDate(locale: String): String @tag(name: \\"admin\\") @tag(name: \\"dev\\")
         account: AccountType
-        metadata: [UserMetadata]
-        ssn: String @inaccessible
-        goodDescription: Boolean @requires(fields: \\"metadata { description }\\")
-        vehicle: Vehicle
-        thing: Thing
-        reviews: [Review]
-        numberOfReviews: Int!
+        birthDate(locale: String): String @tag(name: \\"admin\\") @tag(name: \\"dev\\")
         goodAddress: Boolean @requires(fields: \\"metadata { address }\\")
+        goodDescription: Boolean @requires(fields: \\"metadata { description }\\")
+        id: ID!
+        metadata: [UserMetadata]
+        name: Name
+        numberOfReviews: Int!
+        reviews: [Review]
+        ssn: String @inaccessible
+        thing: Thing
+        username: String
+        vehicle: Vehicle
       }
 
       type UserMetadata {
-        name: String
         address: String
         description: String
+        name: String
       }
 
       type Van implements Vehicle @key(fields: \\"id\\") {
-        id: String!
         description: String
+        id: String!
         price: String
         retailPrice: String @requires(fields: \\"price\\")
       }
 
       interface Vehicle {
-        id: String!
         description: String
+        id: String!
         price: String
         retailPrice: String
       }

@@ -1,7 +1,11 @@
 overwrite: true
-schema: "https://uplink.api.apollographql.com/"
+schema: [
+  "https://uplink.api.apollographql.com/",
+  "https://uplink.api.apollographql.com/monitoring",
+]
 documents:
   - gateway-js/src/loadSupergraphSdlFromStorage.ts
+  - gateway-js/src/outOfBandReporter.ts
 generates:
   gateway-js/src/__generated__/graphqlTypes.ts:
     plugins:

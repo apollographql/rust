@@ -98,18 +98,22 @@ function fetchApolloGcs(
 }
 
 export async function getServiceDefinitionsFromStorage({
-  graphId,
+  graphRef,
   apiKeyHash,
-  graphVariant,
   federationVersion,
   fetcher,
 }: {
-  graphId: string;
+  graphRef: string;
   apiKeyHash: string;
-  graphVariant: string;
   federationVersion: number;
   fetcher: typeof fetch;
 }): Promise<ServiceDefinitionUpdate> {
+  // The protocol for talking to GCS requires us to split the graph ref
+  // into ID and variant; sigh.
+  const at = graphRef.indexOf('@');
+  const graphId = at === -1 ? graphRef : graphRef.substring(0, at);
+  const graphVariant = at === -1 ? 'current' : graphRef.substring(at + 1);
+
   // fetch the storage secret
   const storageSecretUrl = getStorageSecretUrl(graphId, apiKeyHash);
 

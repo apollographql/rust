@@ -4,11 +4,26 @@
 
 > The changes noted within this `vNEXT` section have not been released yet.  New PRs and commits which introduce changes should include an entry in this `vNEXT` section as part of their development.  When a release is being prepared, a new header will be (manually) created below and the appropriate changes within that release will be moved into the new section.
 
--  Take subtypes into account when matching type conditions to extract representations. [PR #804](https://github.com/apollographql/federation/pull/804)
+## v0.31.0
+
+- OpenTelemetry intrumentation. [836](https://github.com/apollographql/federation/pull/836)
+
+## v0.30.0
+
+- Send error reports to a configurable endpoint when providing the `APOLLO_OUT_OF_BAND_REPORTER_ENDPOINT` env variable. Using the Apollo URL `https://uplink.api.apollographql.com/monitoring` is recommended unless you have a custom configuration. Reports will only be sent if the env variable is set. [PR #777](https://github.com/apollographql/federation/pull/777)
+
+## v0.29.1
+
+- More work towards compatibility with Apollo Server 3 preview releases. [PR #822](https://github.com/apollographql/federation/pull/822)
+
+## v0.29.0
+
+- This release is intended to be compatible with preview releases of Apollo Server 3. The `apollo` option to `ApolloGateway.load` now can accept the signature sent by AS2 (which always includes `graphVariant`) or AS3 (which never does), and the dependencies on Apollo Server packages allow for preview releases as well as the AS2 versions. (However, it was not quite enough for AS3 compatibility; see 0.29.1 above.) [PR #819](https://github.com/apollographql/federation/pull/819) [PR #819](https://github.com/apollographql/federation/pull/819)
 
 ## v0.28.3
 
 - Fix plan querying a subgraph with an interface it doesn't know due to directives [PR #805](https://github.com/apollographql/federation/pull/805) [Issue #801](https://github.com/apollographql/federation/issues/801)
+- Take subtypes into account when matching type conditions to extract representations. [PR #804](https://github.com/apollographql/federation/pull/804)
 
 ## v0.28.0
 

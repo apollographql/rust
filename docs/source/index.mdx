@@ -162,8 +162,8 @@ server.listen();
 ```
 
 That’s it! With Apollo Federation, schemas and resolvers live in your
-implementing services. The gateway serves only to plan and execute GraphQL
-operations across those implementing services.
+subgraphs. The gateway serves only to plan and execute GraphQL
+operations across those subgraphs.
 
 Now we can execute GraphQL operations against our composed schema just as if it were implemented as a single, monolithic service:
 

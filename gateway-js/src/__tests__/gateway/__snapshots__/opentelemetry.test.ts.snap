@@ -1,0 +1,187 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`opentelemetry receives spans on fetch failure 1`] = `
+[
+  {
+    "name": "gateway.request",
+    "attributes": {},
+    "children": [
+      {
+        "name": "gateway.validate",
+        "attributes": {},
+        "children": [],
+        "status": {
+          "code": 0
+        }
+      },
+      {
+        "name": "gateway.plan",
+        "attributes": {},
+        "children": [],
+        "status": {
+          "code": 0
+        }
+      },
+      {
+        "name": "gateway.execute",
+        "attributes": {},
+        "children": [
+          {
+            "name": "gateway.fetch",
+            "attributes": {
+              "service": "product"
+            },
+            "children": [],
+            "status": {
+              "code": 2
+            }
+          },
+          {
+            "name": "gateway.postprocessing",
+            "attributes": {},
+            "children": [],
+            "status": {
+              "code": 0
+            }
+          }
+        ],
+        "status": {
+          "code": 2
+        }
+      }
+    ],
+    "status": {
+      "code": 2
+    }
+  }
+]
+`;
+
+exports[`opentelemetry with local data receives spans on plan failure 1`] = `
+[
+  {
+    "name": "gateway.request",
+    "attributes": {},
+    "children": [
+      {
+        "name": "gateway.validate",
+        "attributes": {},
+        "children": [],
+        "status": {
+          "code": 0
+        }
+      },
+      {
+        "name": "gateway.plan",
+        "attributes": {},
+        "children": [],
+        "status": {
+          "code": 2
+        }
+      }
+    ],
+    "status": {
+      "code": 2
+    }
+  }
+]
+`;
+
+exports[`opentelemetry with local data receives spans on success 1`] = `
+[
+  {
+    "name": "gateway.request",
+    "attributes": {},
+    "children": [
+      {
+        "name": "gateway.validate",
+        "attributes": {},
+        "children": [],
+        "status": {
+          "code": 0
+        }
+      },
+      {
+        "name": "gateway.plan",
+        "attributes": {},
+        "children": [],
+        "status": {
+          "code": 0
+        }
+      },
+      {
+        "name": "gateway.execute",
+        "attributes": {},
+        "children": [
+          {
+            "name": "gateway.fetch",
+            "attributes": {
+              "service": "product"
+            },
+            "children": [],
+            "status": {
+              "code": 0
+            }
+          },
+          {
+            "name": "gateway.fetch",
+            "attributes": {
+              "service": "books"
+            },
+            "children": [],
+            "status": {
+              "code": 0
+            }
+          },
+          {
+            "name": "gateway.fetch",
+            "attributes": {
+              "service": "product"
+            },
+            "children": [],
+            "status": {
+              "code": 0
+            }
+          },
+          {
+            "name": "gateway.postprocessing",
+            "attributes": {},
+            "children": [],
+            "status": {
+              "code": 0
+            }
+          }
+        ],
+        "status": {
+          "code": 0
+        }
+      }
+    ],
+    "status": {
+      "code": 0
+    }
+  }
+]
+`;
+
+exports[`opentelemetry with local data receives spans on validation failure 1`] = `
+[
+  {
+    "name": "gateway.request",
+    "attributes": {},
+    "children": [
+      {
+        "name": "gateway.validate",
+        "attributes": {},
+        "children": [],
+        "status": {
+          "code": 2
+        }
+      }
+    ],
+    "status": {
+      "code": 2
+    }
+  }
+]
+`;

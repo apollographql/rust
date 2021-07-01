@@ -184,8 +184,8 @@ describe('gateway startup errors', () => {
 
     expect(err.message).toMatchInlineSnapshot(`
       "A valid schema couldn't be composed. The following composition errors were found:
-      	[accounts] User -> A @key selects id, but User.id could not be found
-      	[accounts] Account -> A @key selects id, but Account.id could not be found"
+      	[accounts] Account -> A @key selects id, but Account.id could not be found
+      	[accounts] User -> A @key selects id, but User.id could not be found"
     `);
   });
 });

@@ -6,8 +6,7 @@ import { getTestingSupergraphSdl } from '../../__tests__/execution-utils';
 import { print } from 'graphql';
 import { fixtures } from 'apollo-federation-integration-testsuite';
 
-export const graphId = 'federated-service';
-export const graphVariant = 'current';
+export const graphRef = 'federated-service@current';
 export const apiKey = 'service:federated-service:DD71EBbGmsuh-6suUVDwnA';
 const apiKeyHash = 'dd55a79d467976346d229a7b12b673ce';
 
@@ -15,8 +14,7 @@ export const mockApolloConfig = {
   apollo: {
     key: apiKey,
     keyHash: apiKeyHash,
-    graphId,
-    graphVariant,
+    graphRef,
   },
 };
 
@@ -69,11 +67,14 @@ function gatewayNock(url: Parameters<typeof nock>[0]): nock.Scope {
 export const mockCloudConfigUrl =
   'https://example.cloud-config-url.com/cloudconfig/';
 
+export const mockOutOfBandReporterUrl =
+  'https://example.outofbandreporter.com/monitoring/';
+
 export function mockSupergraphSdlRequest() {
   return gatewayNock(mockCloudConfigUrl).post('/', {
     query: SUPERGRAPH_SDL_QUERY,
     variables: {
-      ref: `${graphId}@${graphVariant}`,
+      ref: graphRef,
       apiKey: apiKey,
     },
   });
@@ -92,6 +93,21 @@ export function mockSupergraphSdlRequestSuccess(
           id,
           supergraphSdl,
         },
+      },
+    }),
+  );
+}
+
+export function mockOutOfBandReportRequest() {
+  return gatewayNock(mockOutOfBandReporterUrl).post('/', () => true);
+}
+
+export function mockOutOfBandReportRequestSuccess() {
+  return mockOutOfBandReportRequest().reply(
+    200,
+    JSON.stringify({
+      data: {
+        reportError: true
       },
     }),
   );

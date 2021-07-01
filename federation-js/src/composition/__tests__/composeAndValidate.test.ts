@@ -203,9 +203,9 @@ it('treats types with @extends as type extensions', () => {
   ) as GraphQLObjectType;
   expect(product).toMatchInlineSnapshot(`
     type Product {
+      price: Int!
       sku: String!
       upc: String!
-      price: Int!
     }
   `);
 });
@@ -243,9 +243,9 @@ it('treats interfaces with @extends as interface extensions', () => {
   ) as GraphQLObjectType;
   expect(product).toMatchInlineSnapshot(`
     interface Product {
+      price: Int!
       sku: String!
       upc: String!
-      price: Int!
     }
   `);
 });
@@ -308,11 +308,11 @@ describe('composition of value types', () => {
         `union CatalogItem = Couch | Mattress`,
       );
       expect(schema.getType('Couch')).toMatchInlineSnapshot(`
-              type Couch {
-                sku: ID!
-                material: String!
-              }
-          `);
+        type Couch {
+          material: String!
+          sku: ID!
+        }
+      `);
     });
 
     it('input types', () => {

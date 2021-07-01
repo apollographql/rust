@@ -79,7 +79,7 @@ pub type ServiceList = Vec<ServiceDefinition>;
 
 /// An error which occurred during JavaScript composition.
 ///
-/// The shape of this error is meant to mimick that of the error created within
+/// The shape of this error is meant to mimic that of the error created within
 /// JavaScript, which is a [`GraphQLError`] from the [`graphql-js`] library.
 ///
 /// [`graphql-js']: https://npm.im/graphql

@@ -32,18 +32,18 @@ enum join__Graph {
 }
 
 type Movie {
-  title: String
   name: String
+  title: String
 }
 
 type Query {
-  users: [User!] @join__field(graph: USERS)
   movies: [Movie!] @join__field(graph: MOVIES)
+  users: [User!] @join__field(graph: USERS)
 }
 
 type User {
+  favorites: [Movie!] @join__field(graph: MOVIES)
   id: ID
   name: String
-  favorites: [Movie!] @join__field(graph: MOVIES)
 }
 

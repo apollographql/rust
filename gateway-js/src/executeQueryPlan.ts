@@ -29,6 +29,10 @@ import {
 } from '@apollo/query-planner';
 import { deepMerge } from './utilities/deepMerge';
 import { isNotNullOrUndefined } from './utilities/array';
+import { default as opentelemetry, SpanStatusCode } from "@opentelemetry/api";
+import {OpenTelemetrySpanNames} from "./utilities/opentelemetry";
+
+const tracer = opentelemetry.trace.getTracer('default');
 
 export type ServiceMap = {
   [serviceName: string]: GraphQLDataSource;
@@ -50,63 +54,87 @@ export async function executeQueryPlan<TContext>(
   requestContext: GraphQLRequestContext<TContext>,
   operationContext: OperationContext,
 ): Promise<GraphQLExecutionResult> {
-  const errors: GraphQLError[] = [];
+  return tracer.startActiveSpan(OpenTelemetrySpanNames.EXECUTE, async span => {
+    try {
+      const errors: GraphQLError[] = [];
 
-  const context: ExecutionContext<TContext> = {
-    queryPlan,
-    operationContext,
-    serviceMap,
-    requestContext,
-    errors,
-  };
+      const context: ExecutionContext<TContext> = {
+        queryPlan,
+        operationContext,
+        serviceMap,
+        requestContext,
+        errors,
+      };
 
-  let data: ResultMap | undefined | null = Object.create(null);
+      let data: ResultMap | undefined | null = Object.create(null);
 
-  const captureTraces = !!(
-    requestContext.metrics && requestContext.metrics.captureTraces
-  );
+      const captureTraces = !!(
+          requestContext.metrics && requestContext.metrics.captureTraces
+      );
 
-  if (queryPlan.node) {
-    const traceNode = await executeNode(
-      context,
-      queryPlan.node,
-      data!,
-      [],
-      captureTraces,
-    );
-    if (captureTraces) {
-      requestContext.metrics!.queryPlanTrace = traceNode;
+      if (queryPlan.node) {
+        const traceNode = await executeNode(
+            context,
+            queryPlan.node,
+            data!,
+            [],
+            captureTraces,
+        );
+        if (captureTraces) {
+          requestContext.metrics!.queryPlanTrace = traceNode;
+        }
+      }
+
+      let result = await tracer.startActiveSpan(OpenTelemetrySpanNames.POST_PROCESSING, async (span) => {
+        // FIXME: Re-executing the query is a pretty heavy handed way of making sure
+        // only explicitly requested fields are included and field ordering follows
+        // the original query.
+        // It is also used to allow execution of introspection queries though.
+        try {
+          const executionResult = await execute({
+            schema: toAPISchema(operationContext.schema),
+            document: {
+              kind: Kind.DOCUMENT,
+              definitions: [
+                operationContext.operation,
+                ...Object.values(operationContext.fragments),
+              ],
+            },
+            rootValue: data,
+            variableValues: requestContext.request.variables,
+            // See also `wrapSchemaWithAliasResolver` in `gateway-js/src/index.ts`.
+            fieldResolver: defaultFieldResolverWithAliasSupport,
+          });
+          data = executionResult.data;
+          if (executionResult.errors?.length) {
+            errors.push(...executionResult.errors)
+          }
+        } catch (error) {
+          span.setStatus({ code:SpanStatusCode.ERROR });
+          return { errors: [error] };
+        } finally {
+          span.end()
+        }
+
+        if (errors.length > 0) {
+          span.setStatus({ code:SpanStatusCode.ERROR });
+        }
+        return errors.length === 0 ? { data } : { errors, data };
+      });
+
+      if(result.errors) {
+        span.setStatus({ code:SpanStatusCode.ERROR });
+      }
+      return result;
     }
-  }
-
-  // FIXME: Re-executing the query is a pretty heavy handed way of making sure
-  // only explicitly requested fields are included and field ordering follows
-  // the original query.
-  // It is also used to allow execution of introspection queries though.
-  try {
-    const executionResult = await execute({
-      schema: toAPISchema(operationContext.schema),
-      document: {
-        kind: Kind.DOCUMENT,
-        definitions: [
-          operationContext.operation,
-          ...Object.values(operationContext.fragments),
-        ],
-      },
-      rootValue: data,
-      variableValues: requestContext.request.variables,
-      // See also `wrapSchemaWithAliasResolver` in `gateway-js/src/index.ts`.
-      fieldResolver: defaultFieldResolverWithAliasSupport,
-    });
-    data = executionResult.data;
-    if (executionResult.errors?.length) {
-      errors.push(...executionResult.errors)
+    catch (err) {
+      span.setStatus({ code:SpanStatusCode.ERROR });
+      throw err;
     }
-  } catch (error) {
-    return { errors: [error] };
-  }
-
-  return errors.length === 0 ? { data } : { errors, data };
+    finally {
+      span.end();
+    }
+  });
 }
 
 // Note: this function always returns a protobuf QueryPlanNode tree, even if
@@ -204,50 +232,54 @@ async function executeFetch<TContext>(
   _path: ResponsePath,
   traceNode: Trace.QueryPlanNode.FetchNode | null,
 ): Promise<void> {
+
   const logger = context.requestContext.logger || console;
   const service = context.serviceMap[fetch.serviceName];
-  if (!service) {
-    throw new Error(`Couldn't find service with name "${fetch.serviceName}"`);
-  }
 
-  let entities: ResultMap[];
-  if (Array.isArray(results)) {
-    // Remove null or undefined entities from the list
-    entities = results.filter(isNotNullOrUndefined);
-  } else {
-    entities = [results];
-  }
-
-  if (entities.length < 1) return;
-
-  let variables = Object.create(null);
-  if (fetch.variableUsages) {
-    for (const variableName of fetch.variableUsages) {
-      const providedVariables = context.requestContext.request.variables;
-      if (
-        providedVariables &&
-        typeof providedVariables[variableName] !== 'undefined'
-      ) {
-        variables[variableName] = providedVariables[variableName];
+  return tracer.startActiveSpan(OpenTelemetrySpanNames.FETCH, {attributes:{service:fetch.serviceName}}, async span => {
+    try {
+      if (!service) {
+        throw new Error(`Couldn't find service with name "${fetch.serviceName}"`);
       }
-    }
-  }
 
-  if (!fetch.requires) {
-    const dataReceivedFromService = await sendOperation(
-      context,
-      fetch.operation,
-      variables,
-    );
+      let entities: ResultMap[];
+      if (Array.isArray(results)) {
+        // Remove null or undefined entities from the list
+        entities = results.filter(isNotNullOrUndefined);
+      } else {
+        entities = [results];
+      }
 
-    for (const entity of entities) {
-      deepMerge(entity, dataReceivedFromService);
-    }
-  } else {
-    const requires = fetch.requires;
+      if (entities.length < 1) return;
 
-    const representations: ResultMap[] = [];
-    const representationToEntity: number[] = [];
+      let variables = Object.create(null);
+      if (fetch.variableUsages) {
+        for (const variableName of fetch.variableUsages) {
+          const providedVariables = context.requestContext.request.variables;
+          if (
+              providedVariables &&
+              typeof providedVariables[variableName] !== 'undefined'
+          ) {
+            variables[variableName] = providedVariables[variableName];
+          }
+        }
+      }
+
+      if (!fetch.requires) {
+        const dataReceivedFromService = await sendOperation(
+            context,
+            fetch.operation,
+            variables,
+        );
+
+        for (const entity of entities) {
+          deepMerge(entity, dataReceivedFromService);
+        }
+      } else {
+        const requires = fetch.requires;
+
+        const representations: ResultMap[] = [];
+        const representationToEntity: number[] = [];
 
     entities.forEach((entity, index) => {
       const representation = executeSelectionSet(
@@ -261,46 +293,55 @@ async function executeFetch<TContext>(
       }
     });
 
-    // If there are no representations, that means the type conditions in
-    // the requires don't match any entities.
-    if (representations.length < 1) return;
+        // If there are no representations, that means the type conditions in
+        // the requires don't match any entities.
+        if (representations.length < 1) return;
 
-    if ('representations' in variables) {
-      throw new Error(`Variables cannot contain key "representations"`);
+        if ('representations' in variables) {
+          throw new Error(`Variables cannot contain key "representations"`);
+        }
+
+        const dataReceivedFromService = await sendOperation(
+            context,
+            fetch.operation,
+            {...variables, representations},
+        );
+
+        if (!dataReceivedFromService) {
+          return;
+        }
+
+        if (
+            !(
+                dataReceivedFromService._entities &&
+                Array.isArray(dataReceivedFromService._entities)
+            )
+        ) {
+          throw new Error(`Expected "data._entities" in response to be an array`);
+        }
+
+        const receivedEntities = dataReceivedFromService._entities;
+
+        if (receivedEntities.length !== representations.length) {
+          throw new Error(
+              `Expected "data._entities" to contain ${representations.length} elements`,
+          );
+        }
+
+        for (let i = 0; i < entities.length; i++) {
+          deepMerge(entities[representationToEntity[i]], receivedEntities[i]);
+        }
+      }
     }
-
-    const dataReceivedFromService = await sendOperation(
-      context,
-      fetch.operation,
-      { ...variables, representations },
-    );
-
-    if (!dataReceivedFromService) {
-      return;
+    catch (err) {
+      span.setStatus({ code:SpanStatusCode.ERROR });
+      throw err;
     }
-
-    if (
-      !(
-        dataReceivedFromService._entities &&
-        Array.isArray(dataReceivedFromService._entities)
-      )
-    ) {
-      throw new Error(`Expected "data._entities" in response to be an array`);
+    finally
+    {
+      span.end();
     }
-
-    const receivedEntities = dataReceivedFromService._entities;
-
-    if (receivedEntities.length !== representations.length) {
-      throw new Error(
-        `Expected "data._entities" to contain ${representations.length} elements`,
-      );
-    }
-
-    for (let i = 0; i < entities.length; i++) {
-      deepMerge(entities[representationToEntity[i]], receivedEntities[i]);
-    }
-  }
-
+  });
   async function sendOperation(
     context: ExecutionContext<TContext>,
     source: string,

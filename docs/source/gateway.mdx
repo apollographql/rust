@@ -52,11 +52,19 @@ In the above example, we provide the `serviceList` configuration option to the
 `ApolloGateway` constructor. This array specifies a `name` and `url` for each
 of our subgraphs. You can specify any string value for `name`, which is used primarily for query planner output, error messages, and logging.
 
-> In production, we recommend running the gateway in a **managed mode** with Apollo Studio, which relies on static files rather than introspection. For details, see [Setting up managed federation](https://www.apollographql.com/docs/studio/managed-federation/setup/).
+> In production, we strongly recommend running the gateway in a **managed mode** with Apollo Studio, which relies on static files rather than introspection. For details, see [Setting up managed federation](https://www.apollographql.com/docs/studio/managed-federation/setup/).
 
-On startup, the gateway fetches each subgraph's schema from its `url` and composes those schemas into a single federated data graph. It then begins accepting incoming requests and creates query plans for them that execute across one or more services.
+On startup, the gateway fetches each subgraph's schema from its `url` and **composes** those schemas into a single supergraph schema. It then begins accepting incoming requests and creates query plans for them that execute across one or more services.
 
 > If there are any composition errors, the `new ApolloServer` call throws an exception with a list of [validation errors](/errors/).
+
+### Composition with the Rover CLI (recommended)
+
+By using the `serviceList` option in the example above, the gateway fetches each subgraph's schema on startup and composes those schemas into a supergraph schema. This is a great way to get started with federation quickly, but it also delays gateway startup and can cause unexpected downtime if composition fails.
+
+As a recommended alternative, you can use the [Rover CLI](https://www.apollographql.com/docs/rover/) to [compose your supergraph schema](https://www.apollographql.com/docs/rover/supergraphs/#composing-a-supergraph-schema) and save it as a static file. The gateway then reads this file on startup (via the [`supergraphSdl` option](./api/apollo-gateway/#supergraphsdl)) instead of fetching subgraph schemas itself. This results in a faster startup and more reliable behavior in environments like CI.
+
+For an example of this, see the [Federation quickstart](./quickstart/).
 
 ## Customizing requests and responses
 

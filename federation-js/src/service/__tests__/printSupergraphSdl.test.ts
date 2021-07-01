@@ -66,31 +66,31 @@ describe('printSupergraphSdl', () => {
         @join__type(graph: PRODUCT, key: \\"isbn\\")
         @join__type(graph: REVIEWS, key: \\"isbn\\")
       {
-        isbn: String! @join__field(graph: BOOKS)
-        title: String @join__field(graph: BOOKS)
-        year: Int @join__field(graph: BOOKS)
-        similarBooks: [Book]! @join__field(graph: BOOKS)
-        metadata: [MetadataOrError] @join__field(graph: BOOKS)
+        details: ProductDetailsBook @join__field(graph: PRODUCT)
         inStock: Boolean @join__field(graph: INVENTORY)
         isCheckedOut: Boolean @join__field(graph: INVENTORY)
-        upc: String! @join__field(graph: PRODUCT)
-        sku: String! @join__field(graph: PRODUCT)
+        isbn: String! @join__field(graph: BOOKS)
+        metadata: [MetadataOrError] @join__field(graph: BOOKS)
         name(delimeter: String = \\" \\"): String @join__field(graph: PRODUCT, requires: \\"title year\\")
         price: String @join__field(graph: PRODUCT)
-        details: ProductDetailsBook @join__field(graph: PRODUCT)
-        reviews: [Review] @join__field(graph: REVIEWS)
         relatedReviews: [Review!]! @join__field(graph: REVIEWS, requires: \\"similarBooks{isbn}\\")
+        reviews: [Review] @join__field(graph: REVIEWS)
+        similarBooks: [Book]! @join__field(graph: BOOKS)
+        sku: String! @join__field(graph: PRODUCT)
+        title: String @join__field(graph: BOOKS)
+        upc: String! @join__field(graph: PRODUCT)
+        year: Int @join__field(graph: BOOKS)
       }
 
-      union Brand = Ikea | Amazon
+      union Brand = Amazon | Ikea
 
       type Car implements Vehicle
         @join__owner(graph: PRODUCT)
         @join__type(graph: PRODUCT, key: \\"id\\")
         @join__type(graph: REVIEWS, key: \\"id\\")
       {
-        id: String! @join__field(graph: PRODUCT)
         description: String @join__field(graph: PRODUCT)
+        id: String! @join__field(graph: PRODUCT)
         price: String @join__field(graph: PRODUCT)
         retailPrice: String @join__field(graph: REVIEWS, requires: \\"price\\")
       }
@@ -107,16 +107,16 @@ describe('printSupergraphSdl', () => {
         @join__type(graph: INVENTORY, key: \\"sku\\")
         @join__type(graph: REVIEWS, key: \\"upc\\")
       {
-        upc: String! @join__field(graph: PRODUCT)
-        sku: String! @join__field(graph: PRODUCT)
-        name: String @join__field(graph: PRODUCT)
-        price: String @join__field(graph: PRODUCT)
         brand: Brand @join__field(graph: PRODUCT)
-        metadata: [MetadataOrError] @join__field(graph: PRODUCT)
         details: ProductDetailsFurniture @join__field(graph: PRODUCT)
         inStock: Boolean @join__field(graph: INVENTORY)
         isHeavy: Boolean @join__field(graph: INVENTORY)
+        metadata: [MetadataOrError] @join__field(graph: PRODUCT)
+        name: String @join__field(graph: PRODUCT)
+        price: String @join__field(graph: PRODUCT)
         reviews: [Review] @join__field(graph: REVIEWS)
+        sku: String! @join__field(graph: PRODUCT)
+        upc: String! @join__field(graph: PRODUCT)
       }
 
       type Ikea {
@@ -124,8 +124,8 @@ describe('printSupergraphSdl', () => {
       }
 
       type Image implements NamedObject {
-        name: String!
         attributes: ImageAttributes!
+        name: String!
       }
 
       type ImageAttributes {
@@ -158,13 +158,13 @@ describe('printSupergraphSdl', () => {
         userAccount(id: ID! = 1): User @join__field(graph: ACCOUNTS, requires: \\"name\\")
       }
 
-      union MetadataOrError = KeyValue | Error
+      union MetadataOrError = Error | KeyValue
 
       type Mutation {
-        login(username: String!, password: String!): User @join__field(graph: ACCOUNTS)
-        reviewProduct(upc: String!, body: String!): Product @join__field(graph: REVIEWS)
-        updateReview(review: UpdateReviewInput!): Review @join__field(graph: REVIEWS)
         deleteReview(id: ID!): Boolean @join__field(graph: REVIEWS)
+        login(password: String!, username: String!): User @join__field(graph: ACCOUNTS)
+        reviewProduct(body: String!, upc: String!): Product @join__field(graph: REVIEWS)
+        updateReview(review: UpdateReviewInput!): Review @join__field(graph: REVIEWS)
       }
 
       type Name {
@@ -184,13 +184,13 @@ describe('printSupergraphSdl', () => {
       }
 
       interface Product {
-        upc: String!
-        sku: String!
-        name: String
-        price: String
         details: ProductDetails
         inStock: Boolean
+        name: String
+        price: String
         reviews: [Review]
+        sku: String!
+        upc: String!
       }
 
       interface ProductDetails {
@@ -203,33 +203,33 @@ describe('printSupergraphSdl', () => {
       }
 
       type ProductDetailsFurniture implements ProductDetails {
-        country: String
         color: String
+        country: String
       }
 
       type Query {
-        user(id: ID!): User @join__field(graph: ACCOUNTS)
-        me: User @join__field(graph: ACCOUNTS)
+        body: Body! @join__field(graph: DOCUMENTS)
         book(isbn: String!): Book @join__field(graph: BOOKS)
         books: [Book] @join__field(graph: BOOKS)
         library(id: ID!): Library @join__field(graph: BOOKS)
-        body: Body! @join__field(graph: DOCUMENTS)
+        me: User @join__field(graph: ACCOUNTS)
         product(upc: String!): Product @join__field(graph: PRODUCT)
-        vehicle(id: String!): Vehicle @join__field(graph: PRODUCT)
-        topProducts(first: Int = 5): [Product] @join__field(graph: PRODUCT)
         topCars(first: Int = 5): [Car] @join__field(graph: PRODUCT)
+        topProducts(first: Int = 5): [Product] @join__field(graph: PRODUCT)
         topReviews(first: Int = 5): [Review] @join__field(graph: REVIEWS)
+        user(id: ID!): User @join__field(graph: ACCOUNTS)
+        vehicle(id: String!): Vehicle @join__field(graph: PRODUCT)
       }
 
       type Review
         @join__owner(graph: REVIEWS)
         @join__type(graph: REVIEWS, key: \\"id\\")
       {
-        id: ID! @join__field(graph: REVIEWS)
-        body(format: Boolean = false): String @join__field(graph: REVIEWS)
         author: User @join__field(graph: REVIEWS, provides: \\"username\\")
-        product: Product @join__field(graph: REVIEWS)
+        body(format: Boolean = false): String @join__field(graph: REVIEWS)
+        id: ID! @join__field(graph: REVIEWS)
         metadata: [MetadataOrError] @join__field(graph: REVIEWS)
+        product: Product @join__field(graph: REVIEWS)
       }
 
       type SMSAccount
@@ -240,8 +240,8 @@ describe('printSupergraphSdl', () => {
       }
 
       type Text implements NamedObject {
-        name: String!
         attributes: TextAttributes!
+        name: String!
       }
 
       type TextAttributes {
@@ -252,8 +252,8 @@ describe('printSupergraphSdl', () => {
       union Thing = Car | Ikea
 
       input UpdateReviewInput {
-        id: ID!
         body: String
+        id: ID!
       }
 
       type User
@@ -264,25 +264,25 @@ describe('printSupergraphSdl', () => {
         @join__type(graph: PRODUCT, key: \\"id\\")
         @join__type(graph: REVIEWS, key: \\"id\\")
       {
-        id: ID! @join__field(graph: ACCOUNTS)
-        name: Name @join__field(graph: ACCOUNTS)
-        username: String @join__field(graph: ACCOUNTS)
-        birthDate(locale: String): String @join__field(graph: ACCOUNTS) @tag(name: \\"admin\\") @tag(name: \\"dev\\")
         account: AccountType @join__field(graph: ACCOUNTS)
-        metadata: [UserMetadata] @join__field(graph: ACCOUNTS)
-        ssn: String @join__field(graph: ACCOUNTS) @inaccessible
-        goodDescription: Boolean @join__field(graph: INVENTORY, requires: \\"metadata{description}\\")
-        vehicle: Vehicle @join__field(graph: PRODUCT)
-        thing: Thing @join__field(graph: PRODUCT)
-        reviews: [Review] @join__field(graph: REVIEWS)
-        numberOfReviews: Int! @join__field(graph: REVIEWS)
+        birthDate(locale: String): String @join__field(graph: ACCOUNTS) @tag(name: \\"admin\\") @tag(name: \\"dev\\")
         goodAddress: Boolean @join__field(graph: REVIEWS, requires: \\"metadata{address}\\")
+        goodDescription: Boolean @join__field(graph: INVENTORY, requires: \\"metadata{description}\\")
+        id: ID! @join__field(graph: ACCOUNTS)
+        metadata: [UserMetadata] @join__field(graph: ACCOUNTS)
+        name: Name @join__field(graph: ACCOUNTS)
+        numberOfReviews: Int! @join__field(graph: REVIEWS)
+        reviews: [Review] @join__field(graph: REVIEWS)
+        ssn: String @join__field(graph: ACCOUNTS) @inaccessible
+        thing: Thing @join__field(graph: PRODUCT)
+        username: String @join__field(graph: ACCOUNTS)
+        vehicle: Vehicle @join__field(graph: PRODUCT)
       }
 
       type UserMetadata {
-        name: String
         address: String
         description: String
+        name: String
       }
 
       type Van implements Vehicle
@@ -290,15 +290,15 @@ describe('printSupergraphSdl', () => {
         @join__type(graph: PRODUCT, key: \\"id\\")
         @join__type(graph: REVIEWS, key: \\"id\\")
       {
-        id: String! @join__field(graph: PRODUCT)
         description: String @join__field(graph: PRODUCT)
+        id: String! @join__field(graph: PRODUCT)
         price: String @join__field(graph: PRODUCT)
         retailPrice: String @join__field(graph: REVIEWS, requires: \\"price\\")
       }
 
       interface Vehicle {
-        id: String!
         description: String
+        id: String!
         price: String
         retailPrice: String
       }

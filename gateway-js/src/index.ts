@@ -2,13 +2,11 @@ import {
   GraphQLService,
   SchemaChangeCallback,
   Unsubscriber,
-  GraphQLServiceEngineConfig,
 } from 'apollo-server-core';
 import {
   GraphQLExecutionResult,
   Logger,
   GraphQLRequestContextExecutionDidStart,
-  ApolloConfig,
 } from 'apollo-server-types';
 import { InMemoryLRUCache } from 'apollo-server-caching';
 import {
@@ -70,6 +68,10 @@ import {
 import { loadSupergraphSdlFromStorage } from './loadSupergraphSdlFromStorage';
 import { getServiceDefinitionsFromStorage } from './legacyLoadServicesFromStorage';
 import { buildComposedSchema } from '@apollo/query-planner';
+import { default as opentelemetry, SpanStatusCode } from "@opentelemetry/api";
+import {OpenTelemetrySpanNames} from "./utilities/opentelemetry";
+
+const tracer = opentelemetry.trace.getTracer('gateway');
 
 type DataSourceMap = {
   [serviceName: string]: { url?: string; dataSource: GraphQLDataSource };
@@ -126,7 +128,7 @@ export const SERVICE_DEFINITION_QUERY =
 
 type GatewayState =
   | { phase: 'initialized' }
-  | { phase: 'failed to load'}
+  | { phase: 'failed to load' }
   | { phase: 'loaded' }
   | { phase: 'stopping'; stoppingDonePromise: Promise<void> }
   | { phase: 'stopped' }
@@ -136,13 +138,43 @@ type GatewayState =
       doneWaiting: () => void;
     }
   | { phase: 'polling'; pollingDonePromise: Promise<void> };
+
+// We want to be compatible with `load()` as called by both AS2 and AS3, so we
+// define its argument types ourselves instead of relying on imports.
+
+// This is what AS3's ApolloConfig looks like; it's what we'll save internally.
+interface ApolloConfigFromAS3 {
+  key?: string;
+  keyHash?: string;
+  graphRef?: string;
+}
+
+// This interface matches what we may receive from either version. We convert it
+// to ApolloConfigFromAS3.
+interface ApolloConfigFromAS2Or3 {
+  key?: string;
+  keyHash?: string;
+  graphRef?: string;
+  graphId?: string;
+  graphVariant?: string;
+}
+
+// This interface was the only way this data was provided prior to AS 2.18; it
+// is being removed in AS 3, so we define our own version.
+interface GraphQLServiceEngineConfig {
+  apiKeyHash: string;
+  graphId: string;
+  graphVariant?: string;
+};
+
+
 export class ApolloGateway implements GraphQLService {
   public schema?: GraphQLSchema;
   private serviceMap: DataSourceMap = Object.create(null);
   private config: GatewayConfig;
   private logger: Logger;
   private queryPlanStore: InMemoryLRUCache<QueryPlan>;
-  private apolloConfig?: ApolloConfig;
+  private apolloConfig?: ApolloConfigFromAS3;
   private onSchemaChangeListeners = new Set<SchemaChangeCallback>();
   private serviceDefinitions: ServiceDefinition[] = [];
   private compositionMetadata?: CompositionMetadata;
@@ -306,7 +338,7 @@ export class ApolloGateway implements GraphQLService {
   }
 
   public async load(options?: {
-    apollo?: ApolloConfig;
+    apollo?: ApolloConfigFromAS2Or3;
     engine?: GraphQLServiceEngineConfig;
   }) {
     if (this.state.phase !== 'initialized') {
@@ -315,13 +347,22 @@ export class ApolloGateway implements GraphQLService {
       );
     }
     if (options?.apollo) {
-      this.apolloConfig = options.apollo;
+      const { key, keyHash, graphRef, graphId, graphVariant } = options.apollo;
+      this.apolloConfig = {
+        key,
+        keyHash,
+        graphRef:
+          graphRef ??
+          (graphId ? `${graphId}@${graphVariant ?? 'current'}` : undefined),
+      };
     } else if (options?.engine) {
       // Older version of apollo-server-core that isn't passing 'apollo' yet.
+      const { apiKeyHash, graphId, graphVariant } = options.engine;
       this.apolloConfig = {
-        keyHash: options.engine.apiKeyHash,
-        graphId: options.engine.graphId,
-        graphVariant: options.engine.graphVariant || 'current',
+        keyHash: apiKeyHash,
+        graphRef: graphId
+          ? `${graphId}@${graphVariant ?? 'current'}`
+          : undefined,
       };
     }
 
@@ -363,8 +404,8 @@ export class ApolloGateway implements GraphQLService {
     const mode = isManagedConfig(this.config) ? 'managed' : 'unmanaged';
     this.logger.info(
       `Gateway successfully loaded schema.\n\t* Mode: ${mode}${
-        this.apolloConfig && this.apolloConfig.graphId
-          ? `\n\t* Service: ${this.apolloConfig.graphId}@${this.apolloConfig.graphVariant}`
+        this.apolloConfig && this.apolloConfig.graphRef
+          ? `\n\t* Service: ${this.apolloConfig.graphRef}`
           : ''
       }`,
     );
@@ -861,7 +902,7 @@ export class ApolloGateway implements GraphQLService {
     }
 
     const canUseManagedConfig =
-      this.apolloConfig?.graphId && this.apolloConfig?.keyHash;
+      this.apolloConfig?.graphRef && this.apolloConfig?.keyHash;
     if (!canUseManagedConfig) {
       throw new Error(
         'When a manual configuration is not provided, gateway requires an Apollo ' +
@@ -877,18 +918,16 @@ export class ApolloGateway implements GraphQLService {
       !isPrecomposedManagedConfig(config)
     ) {
       return getServiceDefinitionsFromStorage({
-        graphId: this.apolloConfig!.graphId!,
+        graphRef: this.apolloConfig!.graphRef!,
         apiKeyHash: this.apolloConfig!.keyHash!,
-        graphVariant: this.apolloConfig!.graphVariant,
         federationVersion: config.federationVersion || 1,
         fetcher: this.fetcher,
       });
     }
 
     return loadSupergraphSdlFromStorage({
-      graphId: this.apolloConfig!.graphId!,
+      graphRef: this.apolloConfig!.graphRef!,
       apiKey: this.apolloConfig!.key!,
-      graphVariant: this.apolloConfig!.graphVariant,
       endpoint: this.experimental_schemaConfigDeliveryEndpoint!,
       fetcher: this.fetcher,
     });
@@ -896,7 +935,7 @@ export class ApolloGateway implements GraphQLService {
 
   private maybeWarnOnConflictingConfig() {
     const canUseManagedConfig =
-      this.apolloConfig?.graphId && this.apolloConfig?.keyHash;
+      this.apolloConfig?.graphRef && this.apolloConfig?.keyHash;
 
     // This might be a bit confusing just by reading, but `!isManagedConfig` just
     // means it's any of the other types of config. If it's any other config _and_
@@ -928,141 +967,184 @@ export class ApolloGateway implements GraphQLService {
   public executor = async <TContext>(
     requestContext: GraphQLRequestContextExecutionDidStart<TContext>,
   ): Promise<GraphQLExecutionResult> => {
-    const { request, document, queryHash } = requestContext;
-    const queryPlanStoreKey = queryHash + (request.operationName || '');
-    const operationContext = buildOperationContext({
-      schema: this.schema!,
-      operationDocument: document,
-      operationName: request.operationName,
-    });
+    return tracer.startActiveSpan(OpenTelemetrySpanNames.REQUEST, async span => {
+      try {
+        const {request, document, queryHash} = requestContext;
+        const queryPlanStoreKey = queryHash + (request.operationName || '');
+        const operationContext = buildOperationContext({
+          schema: this.schema!,
+          operationDocument: document,
+          operationName: request.operationName,
+        });
 
-    // No need to build a query plan if we know the request is invalid beforehand
-    // In the future, this should be controlled by the requestPipeline
-    const validationErrors = this.validateIncomingRequest(
-      requestContext,
-      operationContext,
-    );
 
-    if (validationErrors.length > 0) {
-      return { errors: validationErrors };
-    }
-
-    let queryPlan: QueryPlan | undefined;
-    if (this.queryPlanStore) {
-      queryPlan = await this.queryPlanStore.get(queryPlanStoreKey);
-    }
-
-    if (!queryPlan) {
-      // TODO(#631): Can we be sure the query planner has been initialized here?
-      queryPlan = this.queryPlanner!.buildQueryPlan(operationContext, {
-        autoFragmentization: Boolean(
-          this.config.experimental_autoFragmentization,
-        ),
-      });
-      if (this.queryPlanStore) {
-        // The underlying cache store behind the `documentStore` returns a
-        // `Promise` which is resolved (or rejected), eventually, based on the
-        // success or failure (respectively) of the cache save attempt.  While
-        // it's certainly possible to `await` this `Promise`, we don't care about
-        // whether or not it's successful at this point.  We'll instead proceed
-        // to serve the rest of the request and just hope that this works out.
-        // If it doesn't work, the next request will have another opportunity to
-        // try again.  Errors will surface as warnings, as appropriate.
-        //
-        // While it shouldn't normally be necessary to wrap this `Promise` in a
-        // `Promise.resolve` invocation, it seems that the underlying cache store
-        // is returning a non-native `Promise` (e.g. Bluebird, etc.).
-        Promise.resolve(
-          this.queryPlanStore.set(queryPlanStoreKey, queryPlan),
-        ).catch((err) =>
-          this.logger.warn(
-            'Could not store queryPlan' + ((err && err.message) || err),
-          ),
+        // No need to build a query plan if we know the request is invalid beforehand
+        // In the future, this should be controlled by the requestPipeline
+        const validationErrors = this.validateIncomingRequest(
+            requestContext,
+            operationContext,
         );
+
+        if (validationErrors.length > 0) {
+          span.setStatus({ code:SpanStatusCode.ERROR });
+          return {errors: validationErrors};
+        }
+
+        let queryPlan: QueryPlan | undefined;
+        if (this.queryPlanStore) {
+          queryPlan = await this.queryPlanStore.get(queryPlanStoreKey);
+        }
+
+        if (!queryPlan) {
+          queryPlan = tracer.startActiveSpan(OpenTelemetrySpanNames.PLAN, span => {
+            try {
+              // TODO(#631): Can we be sure the query planner has been initialized here?
+              return this.queryPlanner!.buildQueryPlan(operationContext, {
+                autoFragmentization: Boolean(
+                    this.config.experimental_autoFragmentization,
+                ),
+              });
+            }
+            catch (err) {
+              span.setStatus({ code:SpanStatusCode.ERROR });
+              throw err;
+            }
+            finally {
+              span.end();
+            }
+          });
+
+          if (this.queryPlanStore) {
+            // The underlying cache store behind the `documentStore` returns a
+            // `Promise` which is resolved (or rejected), eventually, based on the
+            // success or failure (respectively) of the cache save attempt.  While
+            // it's certainly possible to `await` this `Promise`, we don't care about
+            // whether or not it's successful at this point.  We'll instead proceed
+            // to serve the rest of the request and just hope that this works out.
+            // If it doesn't work, the next request will have another opportunity to
+            // try again.  Errors will surface as warnings, as appropriate.
+            //
+            // While it shouldn't normally be necessary to wrap this `Promise` in a
+            // `Promise.resolve` invocation, it seems that the underlying cache store
+            // is returning a non-native `Promise` (e.g. Bluebird, etc.).
+            Promise.resolve(
+                this.queryPlanStore.set(queryPlanStoreKey, queryPlan),
+            ).catch((err) =>
+                this.logger.warn(
+                    'Could not store queryPlan' + ((err && err.message) || err),
+                ),
+            );
+          }
+        }
+
+        const serviceMap: ServiceMap = Object.entries(this.serviceMap).reduce(
+            (serviceDataSources, [serviceName, {dataSource}]) => {
+              serviceDataSources[serviceName] = dataSource;
+              return serviceDataSources;
+            },
+            Object.create(null) as ServiceMap,
+        );
+
+        if (this.experimental_didResolveQueryPlan) {
+          this.experimental_didResolveQueryPlan({
+            queryPlan,
+            serviceMap,
+            requestContext,
+            operationContext,
+          });
+        }
+
+        const response = await executeQueryPlan<TContext>(
+            queryPlan,
+            serviceMap,
+            requestContext,
+            operationContext,
+        );
+
+        const shouldShowQueryPlan =
+            this.config.__exposeQueryPlanExperimental &&
+            request.http &&
+            request.http.headers &&
+            request.http.headers.get('Apollo-Query-Plan-Experimental');
+
+        // We only want to serialize the query plan if we're going to use it, which is
+        // in two cases:
+        // 1) non-empty query plan and config.debug === true
+        // 2) non-empty query plan and shouldShowQueryPlan === true
+        const serializedQueryPlan =
+            queryPlan.node && (this.config.debug || shouldShowQueryPlan)
+                ? // FIXME: I disabled printing the query plan because this lead to a
+                  // circular dependency between the `@apollo/gateway` and
+                  // `apollo-federation-integration-testsuite` packages.
+                  // We should either solve that or switch Playground to
+                  // the JSON serialization format.
+                prettyFormatQueryPlan(queryPlan)
+                : null;
+
+        if (this.config.debug && serializedQueryPlan) {
+          this.logger.debug(serializedQueryPlan);
+        }
+
+        if (shouldShowQueryPlan) {
+          // TODO: expose the query plan in a more flexible JSON format in the future
+          // and rename this to `queryPlan`. Playground should cutover to use the new
+          // option once we've built a way to print that representation.
+
+          // In the case that `serializedQueryPlan` is null (on introspection), we
+          // still want to respond to Playground with something truthy since it depends
+          // on this to decide that query plans are supported by this gateway.
+          response.extensions = {
+            __queryPlanExperimental: serializedQueryPlan || true,
+          };
+        }
+        if(response.errors) {
+          span.setStatus({ code:SpanStatusCode.ERROR });
+        }
+        return response;
       }
-    }
-
-    const serviceMap: ServiceMap = Object.entries(this.serviceMap).reduce(
-      (serviceDataSources, [serviceName, { dataSource }]) => {
-        serviceDataSources[serviceName] = dataSource;
-        return serviceDataSources;
-      },
-      Object.create(null) as ServiceMap,
-    );
-
-    if (this.experimental_didResolveQueryPlan) {
-      this.experimental_didResolveQueryPlan({
-        queryPlan,
-        serviceMap,
-        requestContext,
-        operationContext,
-      });
-    }
-
-    const response = await executeQueryPlan<TContext>(
-      queryPlan,
-      serviceMap,
-      requestContext,
-      operationContext,
-    );
-
-    const shouldShowQueryPlan =
-      this.config.__exposeQueryPlanExperimental &&
-      request.http &&
-      request.http.headers &&
-      request.http.headers.get('Apollo-Query-Plan-Experimental');
-
-    // We only want to serialize the query plan if we're going to use it, which is
-    // in two cases:
-    // 1) non-empty query plan and config.debug === true
-    // 2) non-empty query plan and shouldShowQueryPlan === true
-    const serializedQueryPlan =
-      queryPlan.node && (this.config.debug || shouldShowQueryPlan)
-        ? // FIXME: I disabled printing the query plan because this lead to a
-          // circular dependency between the `@apollo/gateway` and
-          // `apollo-federation-integration-testsuite` packages.
-          // We should either solve that or switch Playground to
-          // the JSON serialization format.
-          prettyFormatQueryPlan(queryPlan)
-        : null;
-
-    if (this.config.debug && serializedQueryPlan) {
-      this.logger.debug(serializedQueryPlan);
-    }
-
-    if (shouldShowQueryPlan) {
-      // TODO: expose the query plan in a more flexible JSON format in the future
-      // and rename this to `queryPlan`. Playground should cutover to use the new
-      // option once we've built a way to print that representation.
-
-      // In the case that `serializedQueryPlan` is null (on introspection), we
-      // still want to respond to Playground with something truthy since it depends
-      // on this to decide that query plans are supported by this gateway.
-      response.extensions = {
-        __queryPlanExperimental: serializedQueryPlan || true,
-      };
-    }
-    return response;
+      catch (err) {
+        span.setStatus({ code:SpanStatusCode.ERROR });
+        throw err;
+      }
+      finally {
+        span.end();
+      }
+    });
   };
 
   private validateIncomingRequest<TContext>(
     requestContext: GraphQLRequestContextExecutionDidStart<TContext>,
     operationContext: OperationContext,
   ) {
-    // casting out of `readonly`
-    const variableDefinitions = operationContext.operation
-      .variableDefinitions as VariableDefinitionNode[] | undefined;
+    return tracer.startActiveSpan(OpenTelemetrySpanNames.VALIDATE, span => {
+      try {
+        // casting out of `readonly`
+        const variableDefinitions = operationContext.operation
+            .variableDefinitions as VariableDefinitionNode[] | undefined;
 
-    if (!variableDefinitions) return [];
+        if (!variableDefinitions) return [];
 
-    const { errors } = getVariableValues(
-      operationContext.schema,
-      variableDefinitions,
-      requestContext.request.variables || {},
-    );
+        const {errors} = getVariableValues(
+            operationContext.schema,
+            variableDefinitions,
+            requestContext.request.variables || {},
+        );
 
-    return errors || [];
+        if(errors) {
+          span.setStatus({ code:SpanStatusCode.ERROR });
+        }
+        return errors || [];
+      }
+      catch (err) {
+        span.setStatus({ code:SpanStatusCode.ERROR });
+        throw err;
+      }
+      finally {
+        span.end();
+      }
+    });
   }
+
 
   // Stops all processes involved with the gateway (for now, just background
   // schema polling). Can be called multiple times safely. Once it (async)

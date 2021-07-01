@@ -1,5 +1,5 @@
 ---
-title: Federated traces
+title: Federated trace data
 description: How federated tracing works
 ---
 
