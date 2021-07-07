@@ -6,6 +6,10 @@
 
 -  _Nothing yet! Stay tuned!_
 
+# v0.2.2
+
+- types: Explicitly declare `FetchGroup[]` return type from `dependentGroups` in `buildQueryPlan`.
+
 # v0.2.1
 
 - Fix plan querying a subgraph with an interface it doesn't know due to directives. [PR #805](https://github.com/apollographql/federation/pull/805) [Issue #801](https://github.com/apollographql/federation/issues/801)

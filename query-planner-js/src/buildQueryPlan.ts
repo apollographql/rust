@@ -876,7 +876,7 @@ class FetchGroup {
     return group;
   }
 
-  get dependentGroups() {
+  get dependentGroups(): FetchGroup[] {
     return [
       ...Object.values(this.dependentGroupsByService),
       ...this.otherDependentGroups,

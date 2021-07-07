@@ -83,7 +83,7 @@ export class OutOfBandReporter {
       input: {
         error: {
           code: errorCode,
-          message: error.message ?? error,
+          message: error.message,
         },
         request: {
           url: request.url,

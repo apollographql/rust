@@ -68,10 +68,8 @@ import {
 import { loadSupergraphSdlFromStorage } from './loadSupergraphSdlFromStorage';
 import { getServiceDefinitionsFromStorage } from './legacyLoadServicesFromStorage';
 import { buildComposedSchema } from '@apollo/query-planner';
-import { default as opentelemetry, SpanStatusCode } from "@opentelemetry/api";
-import {OpenTelemetrySpanNames} from "./utilities/opentelemetry";
-
-const tracer = opentelemetry.trace.getTracer('gateway');
+import { SpanStatusCode } from "@opentelemetry/api";
+import { OpenTelemetrySpanNames, tracer } from "./utilities/opentelemetry";
 
 type DataSourceMap = {
   [serviceName: string]: { url?: string; dataSource: GraphQLDataSource };
