@@ -1,4 +1,5 @@
 import {
+  assertValidSchema,
   GraphQLDirective,
   GraphQLNamedType,
   GraphQLSchema,
@@ -39,6 +40,8 @@ export function toAPISchema(schema: GraphQLSchema): GraphQLSchema {
   });
 
   schema.__apiSchema = apiSchema;
+
+  assertValidSchema(schema);
 
   return apiSchema;
 

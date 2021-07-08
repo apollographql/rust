@@ -38,6 +38,8 @@ export function removeInaccessibleElements(
     }),
   );
 
+  removeRootTypesIfNeeded();
+
   return transformSchema(schema, (type) => {
     // Remove the type.
     if (typesToRemove.has(type)) return null;
@@ -70,6 +72,36 @@ export function removeInaccessibleElements(
       return undefined;
     }
   });
+
+  function removeRootTypesIfNeeded() {
+    let schemaConfig = schema.toConfig();
+    let hasRemovedRootType = false;
+
+    const queryType = schema.getQueryType();
+
+    if (queryType && typesToRemove.has(queryType)) {
+      schemaConfig.query = undefined;
+      hasRemovedRootType = true;
+    }
+
+    const mutationType = schema.getMutationType();
+
+    if (mutationType && typesToRemove.has(mutationType)) {
+      schemaConfig.mutation = undefined;
+      hasRemovedRootType = true;
+    }
+
+    const subscriptionType = schema.getSubscriptionType();
+
+    if (subscriptionType && typesToRemove.has(subscriptionType)) {
+      schemaConfig.subscription = undefined;
+      hasRemovedRootType = true;
+    }
+
+    if (hasRemovedRootType) {
+      schema = new GraphQLSchema(schemaConfig);
+    }
+  }
 
   function removeInaccessibleFields(
     type: GraphQLCompositeType,
