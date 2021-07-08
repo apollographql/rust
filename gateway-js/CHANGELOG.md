@@ -6,6 +6,10 @@
 
 - _Nothing yet. Stay tuned!_
 
+## v0.33.0
+
+- Only changes in the similarly versioned `@apollo/federation` (v0.26.0) package.
+
 ## v0.32.0
 
 - This release updates dependencies so that it will support the final release of Apollo Server 3 when it is released. (Since 0.29, it has supported preview releases of Apollo Server 3.) There are no code changes.

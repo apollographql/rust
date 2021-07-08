@@ -33,7 +33,7 @@ import { assert } from '../utilities';
 import { CoreDirective } from '../coreSpec';
 import { getJoinDefinitions } from '../joinSpec';
 import { printFieldSet } from '../composition/utils';
-import { InaccessibleDirective, TagDirective } from '../directives';
+import { appliedDirectives, InaccessibleDirective, TagDirective } from '../directives';
 
 type Options = {
   /**
@@ -168,15 +168,25 @@ function printSchemaDefinition(schema: GraphQLSchema): string {
   return (
     'schema' +
     // Core change: print @core directive usages on schema node
-    printCoreDirectives() +
+    printCoreDirectives(schema) +
     `\n{\n${operationTypes.join('\n')}\n}`
   );
 }
 
-function printCoreDirectives() {
+function printCoreDirectives(schema: GraphQLSchema) {
+  const appliedDirectiveNames = appliedDirectives.map(({name}) => name);
+  const schemaDirectiveNames = schema.getDirectives().map(({ name }) => name);
+  const appliedDirectivesToInclude = schemaDirectiveNames.filter((name) =>
+    appliedDirectiveNames.includes(name),
+  );
+  const appliedDirectiveSpecUrls = appliedDirectivesToInclude.map(
+    (name) => `https://specs.apollo.dev/${name}/v0.1`,
+  );
+
   return [
     'https://specs.apollo.dev/core/v0.1',
     'https://specs.apollo.dev/join/v0.1',
+    ...appliedDirectiveSpecUrls,
   ].map((feature) => `\n  @core(feature: ${printStringLiteral(feature)})`);
 }
 
@@ -438,7 +448,11 @@ function printAppliedDirectives(field: GraphQLField<any, any>) {
   ) as DirectiveNode[];
 
   if (appliedDirectives.length < 1) return '';
-  return ` ${appliedDirectives.map(print).join(' ')}`;
+  return ` ${appliedDirectives
+    .slice()
+    .sort((a, b) => a.name.value.localeCompare(b.name.value))
+    .map(print)
+    .join(' ')}`;
 };
 
 // Core change: `onNewLine` is a formatting nice-to-have for printing

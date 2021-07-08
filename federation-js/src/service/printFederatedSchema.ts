@@ -31,11 +31,12 @@ import {
   GraphQLEnumValue,
   GraphQLString,
   DEFAULT_DEPRECATION_REASON,
+  DirectiveNode,
 } from 'graphql';
 import { Maybe } from '../composition';
 import { isFederationType } from '../types';
-import { isFederationDirective } from '../composition/utils';
-import federationDirectives, { gatherDirectives } from '../directives';
+import { isApolloTypeSystemDirective } from '../composition/utils';
+import { federationDirectives, gatherDirectives } from '../directives';
 
 type Options = {
   /**
@@ -62,7 +63,7 @@ export function printSchema(schema: GraphQLSchema, options?: Options): string {
     // Federation change: treat the directives defined by the federation spec
     // similarly to the directives defined by the GraphQL spec (ie, don't print
     // their definitions).
-    (n) => !isSpecifiedDirective(n) && !isFederationDirective(n),
+    (n) => !isSpecifiedDirective(n) && !isApolloTypeSystemDirective(n),
     isDefinedType,
     options,
   );
@@ -282,27 +283,43 @@ function printFields(
       ': ' +
       String(f.type) +
       printDeprecated(f) +
-      printFederationDirectives(f),
+      printFederationDirectives(f) +
+      printAppliedDirectives(f),
   );
   return printBlock(fields);
 }
 
 // Federation change: *do* print the usages of federation directives.
 function printFederationDirectives(
-  type: GraphQLNamedType | GraphQLField<any, any>,
+  typeOrField: GraphQLNamedType | GraphQLField<any, any>,
 ): string {
-  if (!type.astNode) return '';
-  if (isInputObjectType(type)) return '';
+  if (!typeOrField.astNode) return '';
+  if (isInputObjectType(typeOrField)) return '';
 
-  const allDirectives = gatherDirectives(type)
+  const federationDirectivesOnTypeOrField = gatherDirectives(typeOrField)
     .filter((n) =>
       federationDirectives.some((fedDir) => fedDir.name === n.name.value),
     )
     .map(print);
-  const dedupedDirectives = [...new Set(allDirectives)];
+  const dedupedDirectives = [...new Set(federationDirectivesOnTypeOrField)];
 
   return dedupedDirectives.length > 0 ? ' ' + dedupedDirectives.join(' ') : '';
 }
+
+// Core addition: print `@tag` and `@inaccessible` directives found in subgraph
+// SDL into the supergraph SDL
+function printAppliedDirectives(field: GraphQLField<any, any>) {
+  const appliedDirectives = (
+    field.extensions?.federation?.appliedDirectives ?? []
+  ) as DirectiveNode[];
+
+  if (appliedDirectives.length < 1) return '';
+  return ` ${appliedDirectives
+    .slice()
+    .sort((a, b) => a.name.value.localeCompare(b.name.value))
+    .map(print)
+    .join(' ')}`;
+};
 
 function printBlock(items: string[]) {
   return items.length !== 0 ? ' {\n' + items.join('\n') + '\n}' : '';

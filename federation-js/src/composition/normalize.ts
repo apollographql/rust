@@ -15,7 +15,7 @@ import {
   reservedRootFields,
   defaultRootOperationNameLookup
 } from './utils';
-import federationDirectives from '../directives';
+import apolloTypeSystemDirectives from '../directives';
 
 export function normalizeTypeDefs(typeDefs: DocumentNode) {
   // The order of this is important - `stripCommonPrimitives` must come after
@@ -298,9 +298,10 @@ export function stripCommonPrimitives(document: DocumentNode) {
   return visit(document, {
     // Remove all common directive definitions from the document
     DirectiveDefinition(node) {
-      const isCommonDirective = [...federationDirectives, ...specifiedDirectives].some(
-        (directive) => directive.name === node.name.value,
-      );
+      const isCommonDirective = [
+        ...apolloTypeSystemDirectives,
+        ...specifiedDirectives,
+      ].some((directive) => directive.name === node.name.value);
       return isCommonDirective ? null : node;
     },
     // Remove all federation scalar definitions from the document

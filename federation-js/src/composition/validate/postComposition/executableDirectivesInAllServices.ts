@@ -1,9 +1,9 @@
 import { GraphQLError, isSpecifiedDirective } from 'graphql';
 import {
   errorWithCode,
-  isFederationDirective,
   logDirective,
   getFederationMetadata,
+  isApolloTypeSystemDirective,
 } from '../../utils';
 import { PostCompositionValidator } from '.';
 /**
@@ -20,7 +20,7 @@ export const executableDirectivesInAllServices: PostCompositionValidator = ({
 
   const customExecutableDirectives = schema
     .getDirectives()
-    .filter(x => !isFederationDirective(x) && !isSpecifiedDirective(x));
+    .filter(x => !isApolloTypeSystemDirective(x) && !isSpecifiedDirective(x));
 
   customExecutableDirectives.forEach(directive => {
     const directiveFederationMetadata = getFederationMetadata(directive);

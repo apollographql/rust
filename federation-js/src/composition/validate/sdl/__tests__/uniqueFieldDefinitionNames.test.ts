@@ -9,7 +9,7 @@ import { validateSDL } from 'graphql/validation/validate';
 import gql from 'graphql-tag';
 import { typeSerializer } from 'apollo-federation-integration-testsuite';
 import { buildMapsFromServiceList } from '../../../compose';
-import federationDirectives from '../../../../directives';
+import apolloTypeSystemDirectives from '../../../../directives';
 import { UniqueFieldDefinitionNames } from '..';
 import { ServiceDefinition } from '../../../types';
 
@@ -41,7 +41,7 @@ describe('UniqueFieldDefinitionNames', () => {
   beforeEach(() => {
     schema = new GraphQLSchema({
       query: undefined,
-      directives: [...specifiedDirectives, ...federationDirectives],
+      directives: [...specifiedDirectives, ...apolloTypeSystemDirectives],
     });
   });
 

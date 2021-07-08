@@ -8,7 +8,7 @@ import {
   specifiedDirectives,
 } from 'graphql';
 import { buildSchemaFromSDL } from 'apollo-graphql';
-import { federationDirectives } from '../../../directives';
+import apolloTypeSystemDirectives from '../../../directives';
 import { ServiceDefinition } from '../../types';
 import {
   findDirectivesOnNode,
@@ -58,7 +58,7 @@ export const keyFieldsMissingExternal = ({
   // this allows us to build a partial schema
   let schema = new GraphQLSchema({
     query: undefined,
-    directives: [...specifiedDirectives, ...federationDirectives],
+    directives: [...specifiedDirectives, ...apolloTypeSystemDirectives],
   });
   try {
     schema = buildSchemaFromSDL(typeDefs, schema);

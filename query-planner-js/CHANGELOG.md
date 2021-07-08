@@ -6,6 +6,10 @@
 
 -  _Nothing yet! Stay tuned!_
 
+# v0.2.3
+
+- Permit @tag and @inaccessible core declarations. [PR #859](https://github.com/apollographql/federation/pull/859)
+
 # v0.2.2
 
 - types: Explicitly declare `FetchGroup[]` return type from `dependentGroups` in `buildQueryPlan`.

@@ -4,7 +4,9 @@ import * as documents from './documents';
 import * as inventory from './inventory';
 import * as product from './product';
 import * as reviews from './reviews';
-import * as reviewsWithUpdate from './reviewsWithUpdate'
+import * as reviewsWithUpdate from './special-cases/reviewsWithUpdate';
+import * as accountsWithoutTagOrInaccessible from './special-cases/accountsWithoutTagOrInaccessible';
+import * as reviewsWithoutTagOrInaccessible from './special-cases/reviewsWithoutTagOrInaccessible';
 
 export {
   accounts,
@@ -13,7 +15,7 @@ export {
   inventory,
   product,
   reviews,
-  reviewsWithUpdate
+  reviewsWithUpdate,
 };
 
 export const fixtures = [
@@ -32,6 +34,15 @@ export const fixturesWithUpdate = [
   inventory,
   product,
   reviewsWithUpdate,
+];
+
+export const fixturesWithoutTagOrInaccessible = [
+  accountsWithoutTagOrInaccessible,
+  books,
+  documents,
+  inventory,
+  product,
+  reviewsWithoutTagOrInaccessible,
 ];
 
 export const fixtureNames = [

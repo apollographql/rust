@@ -1,6 +1,6 @@
 import gql from 'graphql-tag';
 
-import * as reviewsService from './reviews';
+import * as reviewsService from '../reviews';
 
 export const name = reviewsService.name;
 export const url = reviewsService.url;

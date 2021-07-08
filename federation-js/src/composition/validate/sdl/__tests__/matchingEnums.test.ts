@@ -13,7 +13,7 @@ import {
   graphqlErrorSerializer,
   gql,
 } from 'apollo-federation-integration-testsuite';
-import federationDirectives from '../../../../directives';
+import apolloTypeSystemDirectives from '../../../../directives';
 import { ServiceDefinition } from '../../../types';
 import { MatchingEnums } from '../matchingEnums';
 
@@ -40,7 +40,7 @@ describe('matchingEnums', () => {
   beforeEach(() => {
     schema = new GraphQLSchema({
       query: undefined,
-      directives: [...specifiedDirectives, ...federationDirectives],
+      directives: [...specifiedDirectives, ...apolloTypeSystemDirectives],
     });
   });
 
