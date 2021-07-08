@@ -43,7 +43,7 @@ describe('removeInaccessibleElements', () => {
       }
 
       type Query {
-        fooField: Foo
+        fooField: Foo @inaccessible
       }
 
       type Foo @inaccessible {
@@ -72,7 +72,7 @@ describe('removeInaccessibleElements', () => {
       }
 
       type Query {
-        fooField: Foo
+        fooField: Foo @inaccessible
       }
 
       interface Foo @inaccessible {
@@ -103,7 +103,7 @@ describe('removeInaccessibleElements', () => {
       }
 
       type Query {
-        fooField: Foo
+        fooField: Foo @inaccessible
       }
 
       union Foo @inaccessible = Bar | Baz
@@ -122,5 +122,36 @@ describe('removeInaccessibleElements', () => {
     expect(schema.getType('Foo')).toBeUndefined();
     expect(schema.getType('Bar')).toBeDefined();
     expect(schema.getType('Baz')).toBeDefined();
+  });
+
+  it(`throws when a field returning an @inaccessible type isn't marked @inaccessible itself`, () => {
+    let schema = buildSchema(`
+      directive @core(feature: String!) repeatable on SCHEMA
+
+      directive @inaccessible on FIELD_DEFINITION | OBJECT | INTERFACE | UNION
+
+      schema
+        @core(feature: "https://specs.apollo.dev/core/v0.1")
+        @core(feature: "https://specs.apollo.dev/inaccessible/v0.1")
+      {
+        query: Query
+      }
+
+      type Query {
+        fooField: Foo
+      }
+
+      type Foo @inaccessible {
+        someField: String
+      }
+
+      union Bar = Foo
+    `);
+
+    expect(() => {
+      removeInaccessibleElements(schema);
+    }).toThrow(
+      `Field Query.fooField returns an @inaccessible type without being marked @inaccessible itself`,
+    );
   });
 });

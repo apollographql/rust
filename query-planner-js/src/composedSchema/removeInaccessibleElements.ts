@@ -12,6 +12,8 @@ import {
   GraphQLNamedType,
   isUnionType,
   GraphQLUnionType,
+  GraphQLError,
+  GraphQLCompositeType,
 } from 'graphql';
 import { transformSchema } from 'apollo-graphql';
 
@@ -45,7 +47,7 @@ export function removeInaccessibleElements(
 
       return new GraphQLObjectType({
         ...typeConfig,
-        fields: removeInaccessibleFields(typeConfig.fields),
+        fields: removeInaccessibleFields(type, typeConfig.fields),
         interfaces: removeInaccessibleTypes(typeConfig.interfaces)
       });
     } else if (isInterfaceType(type)) {
@@ -53,7 +55,7 @@ export function removeInaccessibleElements(
 
       return new GraphQLInterfaceType({
         ...typeConfig,
-        fields: removeInaccessibleFields(typeConfig.fields),
+        fields: removeInaccessibleFields(type, typeConfig.fields),
         interfaces: removeInaccessibleTypes(typeConfig.interfaces)
       });
     } else if (isUnionType(type)) {
@@ -70,21 +72,24 @@ export function removeInaccessibleElements(
   });
 
   function removeInaccessibleFields(
+    type: GraphQLCompositeType,
     fieldMapConfig: GraphQLFieldConfigMap<any, any>,
   ) {
     const newFieldMapConfig: GraphQLFieldConfigMap<any, any> =
       Object.create(null);
 
     for (const [fieldName, fieldConfig] of Object.entries(fieldMapConfig)) {
-      if (typesToRemove.has(getNamedType(fieldConfig.type))) {
-        continue;
-      }
-
       if (
         fieldConfig.astNode &&
         hasDirective(inaccessibleDirective!, fieldConfig.astNode)
       ) {
         continue;
+      } else if (typesToRemove.has(getNamedType(fieldConfig.type))) {
+        throw new GraphQLError(
+          `Field ${type.name}.${fieldName} returns ` +
+            `an @inaccessible type without being marked @inaccessible itself.`,
+          fieldConfig.astNode,
+        );
       }
 
       newFieldMapConfig[fieldName] = fieldConfig;
