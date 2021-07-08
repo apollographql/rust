@@ -33,7 +33,7 @@ import { assert } from '../utilities';
 import { CoreDirective } from '../coreSpec';
 import { getJoinDefinitions } from '../joinSpec';
 import { printFieldSet } from '../composition/utils';
-import { appliedDirectives } from '../directives';
+import { appliedDirectives, InaccessibleDirective, TagDirective } from '../directives';
 
 type Options = {
   /**
@@ -86,6 +86,8 @@ export function printSupergraphSdl(
       JoinTypeDirective,
       JoinOwnerDirective,
       JoinGraphDirective,
+      TagDirective,
+      InaccessibleDirective,
       ...config.directives,
     ],
     types: [FieldSetScalar, JoinGraphEnum, ...config.types],

@@ -39,7 +39,7 @@ import { getVariableValues } from 'graphql/execution/values';
 import fetcher from 'make-fetch-happen';
 import { HttpRequestCache } from './cache';
 import { fetch } from 'apollo-server-env';
-import { QueryPlanner, QueryPlan, prettyFormatQueryPlan } from '@apollo/query-planner';
+import { QueryPlanner, QueryPlan, prettyFormatQueryPlan, toAPISchema } from '@apollo/query-planner';
 import {
   ServiceEndpointDefinition,
   Experimental_DidFailCompositionCallback,
@@ -428,7 +428,7 @@ export class ApolloGateway implements GraphQLService {
       throw e;
     }
 
-    this.schema = schema;
+    this.schema = toAPISchema(schema);
     // TODO(trevor): #580 redundant parse
     this.parsedSupergraphSdl = parse(supergraphSdl);
     this.queryPlanner = new QueryPlanner(schema);
@@ -508,7 +508,7 @@ export class ApolloGateway implements GraphQLService {
         "A valid schema couldn't be composed. Falling back to previous schema.",
       );
     } else {
-      this.schema = schema;
+      this.schema = toAPISchema(schema);
       this.queryPlanner = new QueryPlanner(schema);
 
       // Notify the schema listeners of the updated schema
@@ -581,7 +581,7 @@ export class ApolloGateway implements GraphQLService {
         "A valid schema couldn't be composed. Falling back to previous schema.",
       );
     } else {
-      this.schema = schema;
+      this.schema = toAPISchema(schema);
       this.queryPlanner = new QueryPlanner(schema);
 
       // Notify the schema listeners of the updated schema

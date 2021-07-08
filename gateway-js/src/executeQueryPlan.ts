@@ -24,7 +24,8 @@ import {
   ResponsePath,
   QueryPlanSelectionNode,
   QueryPlanFieldNode,
-  getResponseName
+  getResponseName,
+  toAPISchema
 } from '@apollo/query-planner';
 import { deepMerge } from './utilities/deepMerge';
 import { isNotNullOrUndefined } from './utilities/array';
@@ -83,14 +84,13 @@ export async function executeQueryPlan<TContext>(
       }
 
       let result = await tracer.startActiveSpan(OpenTelemetrySpanNames.POST_PROCESSING, async (span) => {
-
         // FIXME: Re-executing the query is a pretty heavy handed way of making sure
         // only explicitly requested fields are included and field ordering follows
         // the original query.
         // It is also used to allow execution of introspection queries though.
         try {
           const executionResult = await execute({
-            schema: operationContext.schema,
+            schema: toAPISchema(operationContext.schema),
             document: {
               kind: Kind.DOCUMENT,
               definitions: [
@@ -110,11 +110,11 @@ export async function executeQueryPlan<TContext>(
         } catch (error) {
           span.setStatus({ code:SpanStatusCode.ERROR });
           return { errors: [error] };
-        }
-        finally {
+        } finally {
           span.end()
         }
-        if(errors.length > 0) {
+
+        if (errors.length > 0) {
           span.setStatus({ code:SpanStatusCode.ERROR });
         }
         return errors.length === 0 ? { data } : { errors, data };

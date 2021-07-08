@@ -17,8 +17,8 @@ import {
   TypeExtensionNode,
   ObjectTypeDefinitionNode,
   NamedTypeNode,
-  lexicographicSortSchema,
   DirectiveNode,
+  lexicographicSortSchema,
 } from 'graphql';
 import { transformSchema } from 'apollo-graphql';
 import apolloTypeSystemDirectives, { appliedDirectives, federationDirectives } from '../directives';
@@ -35,7 +35,7 @@ import {
   getFederationMetadata,
   CompositionResult,
   isDirectiveDefinitionNode,
-  isFederationDirective
+  isFederationDirective,
 } from './utils';
 import {
   ServiceDefinition,

@@ -4,9 +4,9 @@ import {
   parse,
 } from 'graphql';
 import path from 'path';
-import { buildComposedSchema } from '..';
+import { buildComposedSchema, toAPISchema } from '..';
 
-describe('buildComposedSchema', () => {
+describe('toAPISchema', () => {
   let schema: GraphQLSchema;
 
   beforeAll(() => {
@@ -17,7 +17,7 @@ describe('buildComposedSchema', () => {
     );
     const supergraphSdl = fs.readFileSync(schemaPath, 'utf8');
 
-    schema = buildComposedSchema(parse(supergraphSdl));
+    schema = toAPISchema(buildComposedSchema(parse(supergraphSdl)));
   });
 
   it(`doesn't include core directives`, () => {

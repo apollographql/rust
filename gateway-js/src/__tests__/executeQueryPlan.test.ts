@@ -1,4 +1,4 @@
-import { getIntrospectionQuery, GraphQLSchema } from 'graphql';
+import { buildClientSchema, getIntrospectionQuery, GraphQLObjectType, GraphQLSchema } from 'graphql';
 import { addResolversToSchema, GraphQLResolverMap } from 'apollo-graphql';
 import gql from 'graphql-tag';
 import { GraphQLRequestContext } from 'apollo-server-types';
@@ -9,6 +9,11 @@ import { LocalGraphQLDataSource } from '../datasources/LocalGraphQLDataSource';
 import { astSerializer, queryPlanSerializer } from 'apollo-federation-integration-testsuite';
 import { getFederatedTestingSchema } from './execution-utils';
 import { QueryPlanner } from '@apollo/query-planner';
+
+import { buildFederatedSchema } from '@apollo/federation';
+import { ApolloGateway } from '..';
+import { ApolloServerBase as ApolloServer } from 'apollo-server-core';
+import { fixtures } from 'apollo-federation-integration-testsuite';
 
 expect.addSnapshotSerializer(astSerializer);
 expect.addSnapshotSerializer(queryPlanSerializer);
@@ -1177,5 +1182,147 @@ describe('executeQueryPlan', () => {
         ],
       }
     `);
+  });
+
+  describe('@inaccessible', () => {
+    it(`should not include @inaccessible fields in introspection`, async () => {
+      const operationContext = buildOperationContext({
+        schema,
+        operationDocument: gql`
+          ${getIntrospectionQuery()}
+        `,
+      });
+      const queryPlan = queryPlanner.buildQueryPlan(operationContext);
+
+      const response = await executeQueryPlan(
+        queryPlan,
+        serviceMap,
+        buildRequestContext(),
+        operationContext,
+      );
+
+      expect(response.data).toHaveProperty('__schema');
+      expect(response.errors).toBeUndefined();
+
+      const introspectedSchema = buildClientSchema(response.data as any);
+
+      const userType = introspectedSchema.getType('User') as GraphQLObjectType;
+
+      expect(userType.getFields()['username']).toBeDefined();
+      expect(userType.getFields()['ssn']).toBeUndefined();
+    });
+
+    it(`should not return @inaccessible fields`, async () => {
+      const operationString = `#graphql
+        query {
+          topReviews {
+            body
+            author {
+              username
+              ssn
+            }
+          }
+        }
+      `;
+
+      const operationDocument = gql(operationString);
+
+      const operationContext = buildOperationContext({
+        schema,
+        operationDocument,
+      });
+
+      const queryPlan = queryPlanner.buildQueryPlan(operationContext);
+
+      const response = await executeQueryPlan(
+        queryPlan,
+        serviceMap,
+        buildRequestContext(),
+        operationContext,
+      );
+
+      expect(response.data).toMatchInlineSnapshot(`
+        Object {
+          "topReviews": Array [
+            Object {
+              "author": Object {
+                "username": "@ada",
+              },
+              "body": "Love it!",
+            },
+            Object {
+              "author": Object {
+                "username": "@ada",
+              },
+              "body": "Too expensive.",
+            },
+            Object {
+              "author": Object {
+                "username": "@complete",
+              },
+              "body": "Could be better.",
+            },
+            Object {
+              "author": Object {
+                "username": "@complete",
+              },
+              "body": "Prefer something else.",
+            },
+            Object {
+              "author": Object {
+                "username": "@complete",
+              },
+              "body": "Wish I had read this before.",
+            },
+          ],
+        }
+      `);
+    });
+
+    it(`should return a validation error when an @inaccessible field is requested`, async () => {
+      // Because validation is part of the Apollo Server request pipeline,
+      // we have to construct an instance of ApolloServer and execute the
+      // the operation against it.
+      // This test uses the same `gateway.load()` pattern as existing tests that
+      // execute operations against Apollo Server (like queryPlanCache.test.ts).
+      // But note that this is only one possible initialization path for the
+      // gateway, and with the current duplication of logic we'd actually need
+      // to test other scenarios (like loading from supergraph SDL) separately.
+
+      const gateway = new ApolloGateway({
+        localServiceList: fixtures,
+        buildService: (service) => {
+          // @ts-ignore
+          return new LocalGraphQLDataSource(buildFederatedSchema([service]));
+        },
+      });
+
+      const { schema, executor } = await gateway.load();
+
+      const server = new ApolloServer({ schema, executor });
+
+      const query = `#graphql
+        query {
+          topReviews {
+            body
+            author {
+              username
+              ssn
+            }
+          }
+        }
+      `;
+
+      const response = await server.executeOperation({
+        query,
+      });
+
+      expect(response.data).toBeUndefined();
+      expect(response.errors).toMatchInlineSnapshot(`
+        Array [
+          [ValidationError: Cannot query field "ssn" on type "User".],
+        ]
+      `);
+    });
   });
 });

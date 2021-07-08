@@ -1,11 +1,8 @@
 import {
   buildASTSchema,
   DocumentNode,
-  GraphQLDirective,
   GraphQLError,
-  GraphQLNamedType,
   GraphQLSchema,
-  isDirective,
   isEnumType,
   isIntrospectionType,
   isObjectType,
@@ -17,6 +14,7 @@ import {
   parseFieldSet,
 } from '../utilities/graphql';
 import { MultiMap } from '../utilities/MultiMap';
+import { ParsedFeatureURL, parseFeatureURL } from './core';
 import {
   FederationFieldMetadata,
   FederationTypeMetadata,
@@ -25,6 +23,16 @@ import {
   isEntityTypeMetadata,
   Graph,
 } from './metadata';
+
+// TODO: We should replace this hard coded list of supported features by a way
+// of differentiating between features that require runtime support and those
+// that can be silently ignored, without enumerating features explicitly.
+export const supportedFeatures: ParsedFeatureURL[] = [
+  'https://specs.apollo.dev/core/v0.1',
+  'https://specs.apollo.dev/join/v0.1',
+  'https://specs.apollo.dev/inaccessible/v0.1',
+  'https://specs.apollo.dev/tag/v0.1'
+].map(parseFeatureURL);
 
 export function buildComposedSchema(document: DocumentNode): GraphQLSchema {
   const schema = buildASTSchema(document);
@@ -47,14 +55,15 @@ export function buildComposedSchema(document: DocumentNode): GraphQLSchema {
   );
 
   for (const coreDirectiveArgs of coreDirectivesArgs) {
-    const feature: string = coreDirectiveArgs['feature'];
+    const feature = parseFeatureURL(coreDirectiveArgs['feature']);
 
+    // TODO: Replace strict feature matching with version satisfaction from the
+    // Core Schema spec.
     if (
-      !(
-        feature === 'https://specs.apollo.dev/core/v0.1' ||
-        feature === 'https://specs.apollo.dev/join/v0.1' ||
-        feature === 'https://specs.apollo.dev/tag/v0.1' ||
-        feature === 'https://specs.apollo.dev/inaccessible/v0.1'
+      !supportedFeatures.some(
+        (supportedFeature) =>
+          supportedFeature.identity === feature.identity &&
+          supportedFeature.version === feature.version,
       )
     ) {
       throw new GraphQLError(
@@ -228,35 +237,8 @@ directive without an @${ownerDirective.name} directive`,
     }
   }
 
-  // We filter out schema elements that should not be exported to get to the
-  // API schema.
-
-  const schemaConfig = schema.toConfig();
-
-  return new GraphQLSchema({
-    ...schemaConfig,
-    types: schemaConfig.types.filter(isExported),
-    directives: schemaConfig.directives.filter(isExported),
-  });
-
-  // TODO: Implement the IsExported algorithm from the Core Schema spec.
-  function isExported(element: NamedSchemaElement) {
-    return !(isAssociatedWithFeature(element, coreName) || isAssociatedWithFeature(element, joinName))
-  }
-
-  function isAssociatedWithFeature(
-    element: NamedSchemaElement,
-    featureName: string,
-  ) {
-    return (
-      // Only directives can use the unprefixed feature name
-      isDirective(element) && element.name === featureName ||
-      element.name.startsWith(`${featureName}__`)
-    );
-  }
+  return schema;
 }
-
-type NamedSchemaElement = GraphQLDirective | GraphQLNamedType;
 
 // This should never happen, hence 'programming error', but this assertion
 // guarantees the existence of `graph`.
