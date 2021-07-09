@@ -22,6 +22,8 @@ export function toAPISchema(schema: GraphQLSchema): GraphQLSchema {
     return schema.__apiSchema;
   }
 
+  assertValidSchema(schema);
+
   schema = removeInaccessibleElements(schema);
 
   // TODO: We should get a list of feature names from the schema itself, rather
@@ -39,9 +41,9 @@ export function toAPISchema(schema: GraphQLSchema): GraphQLSchema {
     directives: schemaConfig.directives.filter(isExported),
   });
 
-  schema.__apiSchema = apiSchema;
+  assertValidSchema(apiSchema);
 
-  assertValidSchema(schema);
+  schema.__apiSchema = apiSchema;
 
   return apiSchema;
 
