@@ -29,6 +29,7 @@
     "npm": "7.x"
   },
   "dependencies": {
+    "@apollo/core": "file:core-js",
     "@apollo/federation": "file:federation-js",
     "@apollo/gateway": "file:gateway-js",
     "@apollo/harmonizer": "file:harmonizer",
@@ -80,6 +81,7 @@
   },
   "jest": {
     "projects": [
+      "<rootDir>/core-js",
       "<rootDir>/federation-js",
       "<rootDir>/federation-integration-testsuite-js",
       "<rootDir>/gateway-js",

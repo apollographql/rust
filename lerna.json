@@ -1,5 +1,6 @@
 {
   "packages": [
+    "core-js",
     "federation-js",
     "federation-integration-testsuite-js",
     "gateway-js",
