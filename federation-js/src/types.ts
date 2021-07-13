@@ -98,7 +98,7 @@ export const entitiesField: GraphQLFieldConfig<any, any> = {
         );
       }
 
-      if (info.cacheControl.cacheHint.replace) {
+      if (info.cacheControl && info.cacheControl.cacheHint.replace) {
         const cacheHint: CacheHint | undefined =
           info.cacheControl.cacheHintFromType(type);
 
