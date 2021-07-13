@@ -214,7 +214,7 @@ function printObject(type: GraphQLObjectType, options?: Options): string {
     (isExtension ? 'extend ' : '') +
     `type ${type.name}${implementedInterfaces}` +
     // Federation addition for printing @key usages
-    printFederationDirectives(type) +
+    printFederationDirectiveUsages(type) +
     printFields(options, type)
   );
 }
@@ -233,7 +233,7 @@ function printInterface(type: GraphQLInterfaceType, options?: Options): string {
     `interface ${type.name}` +
     // Federation change: graphql@14 doesn't support interfaces implementing interfaces
     // printImplementedInterfaces(type) +
-    printFederationDirectives(type) +
+    printFederationDirectiveUsages(type) +
     printFields(options, type)
   );
 }
@@ -283,14 +283,14 @@ function printFields(
       ': ' +
       String(f.type) +
       printDeprecated(f) +
-      printFederationDirectives(f) +
-      printAppliedDirectives(f),
+      printFederationDirectiveUsages(f) +
+      printOtherKnownDirectiveUsages(f),
   );
   return printBlock(fields);
 }
 
 // Federation change: *do* print the usages of federation directives.
-function printFederationDirectives(
+function printFederationDirectiveUsages(
   typeOrField: GraphQLNamedType | GraphQLField<any, any>,
 ): string {
   if (!typeOrField.astNode) return '';
@@ -308,13 +308,13 @@ function printFederationDirectives(
 
 // Core addition: print `@tag` and `@inaccessible` directives found in subgraph
 // SDL into the supergraph SDL
-function printAppliedDirectives(field: GraphQLField<any, any>) {
-  const appliedDirectives = (
-    field.extensions?.federation?.appliedDirectives ?? []
+function printOtherKnownDirectiveUsages(field: GraphQLField<any, any>) {
+  const otherKnownDirectiveUsages = (
+    field.extensions?.federation?.otherKnownDirectiveUsages ?? []
   ) as DirectiveNode[];
 
-  if (appliedDirectives.length < 1) return '';
-  return ` ${appliedDirectives
+  if (otherKnownDirectiveUsages.length < 1) return '';
+  return ` ${otherKnownDirectiveUsages
     .slice()
     .sort((a, b) => a.name.value.localeCompare(b.name.value))
     .map(print)

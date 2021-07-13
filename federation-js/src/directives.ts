@@ -80,11 +80,14 @@ export const federationDirectives = [
   ProvidesDirective,
 ];
 
-export const appliedDirectives = [InaccessibleDirective, TagDirective];
+export const otherKnownDirectiveDefinitions = [
+  InaccessibleDirective,
+  TagDirective,
+];
 
 const apolloTypeSystemDirectives = [
   ...federationDirectives,
-  ...appliedDirectives,
+  ...otherKnownDirectiveDefinitions,
 ];
 
 export default apolloTypeSystemDirectives;

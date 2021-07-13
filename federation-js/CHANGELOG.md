@@ -5,6 +5,7 @@
 > The changes noted within this `vNEXT` section have not been released yet.  New PRs and commits which introduce changes should include an entry in this `vNEXT` section as part of their development.  When a release is being prepared, a new header will be (manually) created below and the appropriate changes within that release will be moved into the new section.
 
 - Skip missing types while iterating over field directive usages. It's possible to capture directive usages on fields whose types don't actually exist in the schema (due to invalid composition). See PR for more details. [PR #868](https://github.com/apollographql/federation/pull/868)
+- Prevent the usage of either @tag or @inaccessible on fields that are marked as @external. [PR #869](https://github.com/apollographql/federation/pull/869)
 
 ## v0.26.0
 
