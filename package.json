@@ -54,7 +54,7 @@
     "apollo-link": "1.2.14",
     "apollo-link-http": "1.5.17",
     "apollo-server": "2.25.2",
-    "apollo-server-env": "3.1.0",
+    "apollo-server-env": "4.0.0",
     "bunyan": "1.8.15",
     "deep-freeze": "0.0.1",
     "graphql": "15.5.1",
